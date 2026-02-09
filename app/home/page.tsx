@@ -30,7 +30,7 @@ export default async function DashboardPage() {
                     <h1 className="text-3xl font-bold text-slate-800">
                         Bonjour, {dbUser.name} !
                     </h1>
-                    <p className="text-slate-500">Gérez vos envies et vos cadeaux.>Gérez vous envies et vos cadeaux.</p>
+                    <p className="text-slate-500">Gérez vos envies et vos cadeaux.</p>
                 </div>
             </header>
             <main className="mb-8">
