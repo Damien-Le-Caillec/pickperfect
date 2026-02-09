@@ -1,8 +1,8 @@
-import { currentUser } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "../../lib/prisma";
 import Link from "next/link";
 
-export default async function DashboardPage() {
+export default async function HomePage() {
     const user = await currentUser();
 
     if (!user) return <div>Vous devez être connecté.</div>;
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
                         Créer une liste
                     </Link>
                 </div>
-                {lists.lenght === 0 ? (
+                {lists.length === 0 ? (
                     <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
                         <p className="text-xl text-slate-400 font-medium">Vous n'avez pas encore de liste.</p>
                         <p className="text-slate-400">Commencez par en créer une pour Noël ou votre Anniversaire !</p>

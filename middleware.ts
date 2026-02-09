@@ -1,11 +1,13 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 // Ici, on définit que tout ce qui commence par "/dashboard" est privé
-const isProtectedRoute = createRouteMatcher(['/home(.*)']);
+const isProtectedRoute = createRouteMatcher(['/home(.*)', '/lists(.*)']);
 
-export default clerkMiddleware((auth, req) => {
+export default clerkMiddleware(async(auth, req) => {
   // Si l'utilisateur essaie d'aller sur une route protégée sans être connecté, on bloque
-  if (isProtectedRoute(req)) auth().protect();
+  if (isProtectedRoute(req)) {
+    await auth.protect();
+  }
 });
 
 export const config = {
