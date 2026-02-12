@@ -1,6 +1,9 @@
 import { ClerkProvider, SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import './globals.css'
 import type { Metadata } from 'next'
+import { config } from '@fortawesome/fontawesome-svg-core'
+import '@fortawesome/fontawesome-svg-core/styles.css'
+config.autoAddCss = false;
 
 export const metadata: Metadata = {
   title: 'PickPerfect',
