@@ -1,0 +1,257 @@
+.page {
+  background: var(--bg);
+  min-height: calc(100vh - 64px);
+}
+
+.wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--s-8) var(--s-6);
+}
+
+/* ---- Header page ---- */
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--s-8);
+  flex-wrap: wrap;
+  gap: var(--s-4);
+}
+
+.greetingLine {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-1);
+  margin-bottom: var(--s-1);
+}
+
+.dateLine {
+  font-size: 0.875rem;
+  color: var(--text-3);
+  text-transform: capitalize;
+}
+
+/* ---- Ligne de stats ---- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-4);
+  margin-bottom: var(--s-6);
+}
+
+.statCard {
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-xl);
+  padding: var(--s-5);
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  box-shadow: var(--shadow-xs);
+  transition: all var(--ease-out);
+}
+.statCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.statIconWrap {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.statValue {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-1);
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.statLabel {
+  font-size: 0.775rem;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+/* ---- Barre XP ---- */
+.xpCard {
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-xl);
+  padding: var(--s-5) var(--s-6);
+  margin-bottom: var(--s-6);
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  box-shadow: var(--shadow-xs);
+}
+
+.xpBadge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--peach), var(--lavender));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.05rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-glow);
+}
+
+.xpInfo { flex: 1; min-width: 0; }
+
+.xpRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--s-2);
+}
+
+.xpTitle { font-size: 0.9rem; font-weight: 700; color: var(--text-1); }
+.xpCount { font-size: 0.78rem; color: var(--text-3); }
+
+/* ---- Grille contenu ---- */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--s-5);
+  align-items: start;
+}
+
+/* ---- Section générique ---- */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--s-5) var(--s-6);
+  border-bottom: 1px solid var(--border-1);
+}
+
+.sectionTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.sectionTitle i { color: var(--peach); font-size: 0.85rem; }
+
+/* ---- Liste des listes récentes ---- */
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-6);
+  text-decoration: none !important;
+  color: var(--text-1) !important;
+  border-bottom: 1px solid var(--border-1);
+  transition: background var(--ease);
+}
+.listItem:last-child { border-bottom: none; }
+.listItem:hover { background: var(--surface-2); }
+
+.listItemIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: var(--peach-dark);
+  flex-shrink: 0;
+}
+
+.listItemInfo { flex: 1; min-width: 0; }
+
+.listItemTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+
+.listItemMeta {
+  font-size: 0.775rem;
+  color: var(--text-3);
+}
+
+.listItemProg { width: 72px; }
+.listItemPct  { font-size: 0.72rem; color: var(--text-3); text-align: right; margin-bottom: 3px; }
+
+/* ---- Sidebar ---- */
+.sidebar { display: flex; flex-direction: column; gap: var(--s-4); }
+
+/* Points widget */
+.pointsWidget { padding: var(--s-6); text-align: center; }
+.pointsNum {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--peach) 0%, var(--lavender) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: var(--s-1);
+}
+.pointsLabel { font-size: 0.8rem; color: var(--text-3); margin-bottom: var(--s-5); }
+.pointsBtn { width: 100%; }
+
+/* Liens rapides */
+.quickLink {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 10px var(--s-5);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-1);
+  text-decoration: none !important;
+  transition: background var(--ease);
+}
+.quickLink:hover { background: var(--surface-2); }
+.quickLink i {
+  width: 16px;
+  font-size: 0.82rem;
+  color: var(--text-3);
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .grid  { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .stats   { grid-template-columns: 1fr 1fr; }
+  .xpCard  { flex-direction: column; text-align: center; }
+  .wrapper { padding: var(--s-5) var(--s-4); }
+}

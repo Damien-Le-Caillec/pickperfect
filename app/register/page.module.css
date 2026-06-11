@@ -1,0 +1,156 @@
+.page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+/* Colonne formulaire */
+.formSide {
+  display: flex;
+  flex-direction: column;
+  padding: var(--s-8) var(--s-12);
+  overflow-y: auto;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-3);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none !important;
+  margin-bottom: var(--s-8);
+  transition: color var(--ease);
+  align-self: flex-start;
+}
+.backLink:hover { color: var(--text-1); }
+
+.formContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 400px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  text-decoration: none !important;
+  margin-bottom: var(--s-8);
+}
+.logoIcon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--peach), var(--lavender));
+  border-radius: var(--r-md);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 1rem;
+}
+.logoText {
+  font-size: 1.2rem; font-weight: 800; letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--peach) 0%, var(--lavender) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+.title { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: var(--s-2); }
+.subtitle { font-size: 0.925rem; color: var(--text-2); margin-bottom: var(--s-8); }
+.subtitle a { color: var(--peach-dark); font-weight: 600; }
+
+.form { display: flex; flex-direction: column; gap: var(--s-4); }
+
+/* Indicateur force mot de passe */
+.strengthBar {
+  display: flex;
+  gap: 3px;
+  margin-top: var(--s-2);
+}
+.strengthSeg {
+  flex: 1;
+  height: 3px;
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+  transition: background var(--ease);
+}
+.segWeak   { background: var(--error); }
+.segFair   { background: var(--warning); }
+.segStrong { background: var(--success); }
+
+.strengthLabel {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  margin-top: var(--s-1);
+}
+
+/* CGU */
+.termsRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  font-size: 0.825rem;
+  color: var(--text-2);
+  cursor: pointer;
+  line-height: 1.5;
+}
+.termsRow input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--peach);
+}
+.termsRow a { color: var(--peach-dark); font-weight: 600; }
+
+.submitBtn { width: 100%; height: 46px; font-size: 0.95rem; margin-top: var(--s-2); }
+
+.footer {
+  text-align: center;
+  margin-top: var(--s-5);
+  font-size: 0.875rem;
+  color: var(--text-2);
+}
+.footer a { color: var(--peach-dark); font-weight: 600; }
+
+/* Colonne panel */
+.panel {
+  background: linear-gradient(145deg, var(--mint-light) 0%, var(--gold-light) 50%, var(--lavender-light) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--s-16) var(--s-12);
+  position: relative;
+  overflow: hidden;
+}
+
+.panelTitle { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: var(--s-8); max-width: 340px; line-height: 1.25; }
+
+.panelItems { display: flex; flex-direction: column; gap: var(--s-5); }
+.panelItem  { display: flex; align-items: flex-start; gap: var(--s-4); }
+.panelItemIcon {
+  width: 44px; height: 44px; border-radius: var(--r-lg);
+  background: var(--glass); backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0; box-shadow: var(--shadow-sm);
+}
+.panelItemTitle { font-size: 0.95rem; font-weight: 700; margin-bottom: 3px; }
+.panelItemDesc  { font-size: 0.825rem; color: var(--text-2); line-height: 1.55; }
+
+.panelDeco1 {
+  position: absolute; width: 200px; height: 200px;
+  border-radius: 50%; background: rgba(255,255,255,0.22);
+  bottom: -50px; right: -50px; pointer-events: none;
+}
+.panelDeco2 {
+  position: absolute; width: 100px; height: 100px;
+  border-radius: 50%; background: rgba(255,255,255,0.15);
+  top: 60px; left: 40px; pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .page { grid-template-columns: 1fr; }
+  .panel { display: none; }
+  .formSide { padding: var(--s-8) var(--s-6); }
+  .formContent { max-width: 100%; }
+}

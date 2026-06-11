@@ -1,0 +1,297 @@
+.wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--s-8) var(--s-6);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-3);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none !important;
+  margin-bottom: var(--s-6);
+  transition: color var(--ease);
+}
+.back:hover { color: var(--text-1); }
+
+/* ---- Header de la liste ---- */
+.listHeader {
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-2xl);
+  padding: var(--s-6) var(--s-8);
+  margin-bottom: var(--s-6);
+  box-shadow: var(--shadow-xs);
+}
+
+.listHeaderBand {
+  height: 4px;
+  background: linear-gradient(90deg, var(--peach), var(--lavender), var(--mint));
+  border-radius: var(--r-full);
+  margin-bottom: var(--s-6);
+}
+
+.listHeaderTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--s-6);
+  flex-wrap: wrap;
+}
+
+.listTitle {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-1);
+  margin-bottom: var(--s-2);
+}
+
+.listDesc {
+  font-size: 0.9rem;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: var(--s-4);
+  max-width: 600px;
+}
+
+.listMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--text-3);
+}
+.listMeta i { margin-right: 4px; }
+
+.listActions {
+  display: flex;
+  gap: var(--s-2);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* Barre de progression */
+.progSection { margin-top: var(--s-5); }
+.progRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--s-2);
+  font-size: 0.82rem;
+  color: var(--text-3);
+}
+.progPct { font-weight: 700; color: var(--peach-dark); }
+
+/* ---- Formulaire d'ajout d'item ---- */
+.addForm {
+  background: var(--surface);
+  border: 1px solid var(--peach-light);
+  border-radius: var(--r-xl);
+  padding: var(--s-6);
+  margin-bottom: var(--s-6);
+  box-shadow: 0 0 0 3px rgba(255,154,139,0.1);
+  animation: fadeUp 0.2s var(--ease-out);
+}
+
+.addFormTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: var(--s-5);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-1);
+}
+.addFormTitle i { color: var(--peach); }
+
+.urlRow {
+  display: flex;
+  gap: var(--s-2);
+  margin-bottom: var(--s-5);
+}
+.urlRow input { flex: 1; }
+
+.addFields {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--s-4);
+  margin-bottom: var(--s-5);
+}
+
+.addFormActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+/* ---- Grille d'items ---- */
+.itemsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--s-5);
+}
+
+.itemsTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.itemsTitle i { color: var(--peach); font-size: 0.875rem; }
+
+.itemsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--s-5);
+}
+
+/* ---- Carte item ---- */
+.item {
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-xs);
+  transition: all var(--ease-out);
+}
+.item:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+
+/* Image */
+.itemImg {
+  height: 160px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.itemImg img { width: 100%; height: 100%; object-fit: cover; }
+
+.itemImgPlaceholder {
+  font-size: 2.5rem;
+  color: var(--border-2);
+}
+
+/* Overlay réservé */
+.reservedOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(52, 211, 153, 0.88);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  gap: var(--s-2);
+  font-size: 0.9rem;
+}
+.reservedOverlay i { font-size: 1.75rem; }
+
+/* Body */
+.itemBody {
+  padding: var(--s-4) var(--s-4) var(--s-3);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.itemTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: var(--s-1);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.itemDesc {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  line-height: 1.5;
+  margin-bottom: var(--s-3);
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.itemPrice {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--peach-dark);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--s-3);
+}
+
+.itemActions {
+  display: flex;
+  gap: var(--s-2);
+  align-items: center;
+}
+
+/* ---- Section partage ---- */
+.shareSection {
+  margin-top: var(--s-8);
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-xl);
+  padding: var(--s-6);
+  box-shadow: var(--shadow-xs);
+}
+
+.shareTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: var(--s-4);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.shareTitle i { color: var(--lavender-dark); }
+
+.shareRow {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.shareInput {
+  flex: 1;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.82rem;
+  color: var(--text-3);
+  background: var(--surface-2);
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  min-height: 40vh;
+  color: var(--text-3);
+}
+
+@media (max-width: 768px) {
+  .listHeaderTop { flex-direction: column; }
+  .listActions   { width: 100%; }
+  .itemsGrid     { grid-template-columns: 1fr; }
+  .addFields     { grid-template-columns: 1fr; }
+  .wrapper       { padding: var(--s-5) var(--s-4); }
+}

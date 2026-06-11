@@ -1,0 +1,88 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: var(--s-6);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-2xl);
+  padding: var(--s-12) var(--s-10);
+  text-align: center;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  animation: fadeUp 0.3s var(--ease-out);
+}
+
+/* Numéro 404 */
+.code {
+  font-size: 6rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--peach) 0%, var(--lavender) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--s-4);
+}
+
+/* Icône erreur */
+.icon {
+  font-size: 3.5rem;
+  margin-bottom: var(--s-5);
+  color: var(--peach);
+}
+
+.title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+  margin-bottom: var(--s-3);
+}
+
+.desc {
+  font-size: 0.925rem;
+  color: var(--text-2);
+  line-height: 1.65;
+  margin-bottom: var(--s-8);
+}
+
+.actions {
+  display: flex;
+  gap: var(--s-3);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Détails techniques (dev only) */
+.details {
+  margin-top: var(--s-6);
+  text-align: left;
+}
+
+.details summary {
+  font-size: 0.8rem;
+  color: var(--text-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.details pre {
+  margin-top: var(--s-3);
+  padding: var(--s-4);
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+  font-size: 0.78rem;
+  color: var(--error);
+  overflow-x: auto;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

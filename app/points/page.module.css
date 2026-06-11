@@ -1,0 +1,294 @@
+.wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--s-8) var(--s-6);
+}
+
+/* ---- Hero ---- */
+.hero {
+  background: linear-gradient(
+    135deg,
+    rgba(255,154,139,0.12) 0%,
+    rgba(197,179,230,0.12) 50%,
+    rgba(162,228,184,0.12) 100%
+  );
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-2xl);
+  padding: var(--s-8);
+  margin-bottom: var(--s-8);
+  display: flex;
+  align-items: center;
+  gap: var(--s-8);
+  flex-wrap: wrap;
+}
+
+.heroLeft { text-align: center; }
+
+.heroPoints {
+  font-size: 4rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--peach), var(--lavender));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: var(--s-1);
+}
+
+.heroPointsLabel {
+  font-size: 0.82rem;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.heroRight { flex: 1; min-width: 240px; }
+
+.levelRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  margin-bottom: var(--s-4);
+}
+
+.levelBadge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--peach), var(--lavender));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-glow);
+}
+
+.levelInfo { flex: 1; }
+
+.levelTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: var(--s-1);
+}
+
+.levelSub {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  margin-bottom: var(--s-2);
+}
+
+.heroStats {
+  display: flex;
+  gap: var(--s-6);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--border-1);
+}
+
+.heroStat { }
+.heroStatNum {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+}
+.heroStatLabel { font-size: 0.75rem; color: var(--text-3); }
+
+/* ---- Tabs ---- */
+.tabs {
+  display: flex;
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+  padding: 3px;
+  gap: 2px;
+  margin-bottom: var(--s-6);
+  width: fit-content;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 8px var(--s-5);
+  border-radius: var(--r-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font);
+  color: var(--text-2);
+  background: transparent;
+  transition: all var(--ease);
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text-1); }
+.tabActive {
+  background: var(--surface);
+  color: var(--text-1);
+  box-shadow: var(--shadow-sm);
+}
+.tab i { font-size: 0.82rem; }
+
+/* ---- Récompenses ---- */
+.rewardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--s-4);
+}
+
+.rewardCard {
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-xl);
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-3);
+  box-shadow: var(--shadow-xs);
+  transition: all var(--ease-out);
+}
+.rewardCard:hover:not(.locked) {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--peach-light);
+}
+
+.rewardCard.locked {
+  opacity: 0.55;
+  filter: grayscale(0.3);
+}
+
+.rewardIconWrap {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+}
+
+.rewardName { font-size: 0.9rem; font-weight: 700; color: var(--text-1); }
+.rewardDesc { font-size: 0.775rem; color: var(--text-3); line-height: 1.5; flex: 1; }
+
+.rewardCost {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--peach-dark);
+  background: rgba(255,154,139,0.08);
+  padding: 4px 12px;
+  border-radius: var(--r-full);
+  width: 100%;
+  text-align: center;
+}
+
+.rewardMissing {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  margin-top: -var(--s-1);
+}
+
+/* ---- Badges ---- */
+.badgesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--s-4);
+}
+
+.badgeCard {
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-xl);
+  padding: var(--s-5);
+  text-align: center;
+  box-shadow: var(--shadow-xs);
+  transition: all var(--ease-out);
+}
+.badgeCard:hover:not(.locked) {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.badgeCard.locked {
+  opacity: 0.45;
+  filter: grayscale(0.5);
+}
+
+.badgeIconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  color: white;
+  margin: 0 auto var(--s-3);
+  box-shadow: var(--shadow-sm);
+}
+
+.badgeName { font-size: 0.9rem; font-weight: 700; margin-bottom: var(--s-1); }
+.badgeDesc { font-size: 0.775rem; color: var(--text-3); line-height: 1.5; margin-bottom: var(--s-2); }
+
+.badgeDate { font-size: 0.72rem; color: var(--text-3); }
+.badgeLockLabel { font-size: 0.72rem; color: var(--text-3); font-style: italic; }
+
+/* ---- Historique ---- */
+.historyList {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--border-1);
+  transition: background var(--ease);
+}
+.historyItem:last-child { border-bottom: none; }
+.historyItem:hover { background: var(--surface-2); }
+
+.historyIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.historyInfo { flex: 1; min-width: 0; }
+.historyLabel { font-size: 0.875rem; font-weight: 600; color: var(--text-1); }
+.historyDate  { font-size: 0.75rem; color: var(--text-3); margin-top: 2px; }
+
+.historyPoints {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+.earned { color: var(--success); }
+.spent  { color: var(--error); }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .hero      { flex-direction: column; text-align: center; }
+  .heroStats { justify-content: center; }
+  .tabs      { width: 100%; }
+  .tab       { flex: 1; justify-content: center; }
+}

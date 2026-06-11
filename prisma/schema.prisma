@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============ UTILISATEURS ============
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String?
+  username       String?   @unique
+  hashedPassword String
+  avatar         String?
+  role           String    @default("USER")
+  emailVerified  Boolean   @default(false)
+  banned         Boolean   @default(false)
+  lastLoginAt    DateTime?
+  loginCount     Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  sessions        Session[]
+  lists           List[]
+  reservations    Reservation[]
+  reservedItems   Item[]             @relation("ItemReservedBy")
+  points          Points?
+  activityLogs    ActivityLog[]
+  pointTxns       PointTransaction[]
+  badges          UserBadge[]
+  listGroupsAdded ListGroup[]        @relation("ListGroupAddedBy")
+  resetTokens     PasswordResetToken[]
+  groups          UserGroup[]
+  listMemberships ListMember[]
+  itemsCreated    Item[]       @relation("ItemCreatedBy")
+
+  @@map("users")
+}
+
+// ============ SESSIONS ============
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ============ RESET MOT DE PASSE ============
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+
+// ============ LISTES ============
+model List {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  privacy     String    @default("UNLISTED")
+  eventDate   DateTime?
+  budget      Float?
+  viewCount   Int       @default(0)
+  shareCount  Int       @default(0)
+  shareToken  String?   @unique
+  collaborative Boolean  @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  items        Item[]
+  groups       ListGroup[]
+  activityLogs ActivityLog[]
+  members      ListMember[]
+  inviteTokens InviteToken[]
+
+  @@index([userId])
+  @@map("lists")
+}
+
+// ============ ITEMS ============
+model Item {
+  id              String    @id @default(cuid())
+  listId          String
+  list            List      @relation(fields: [listId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?
+  price           Float?
+  currency        String    @default("EUR")
+  url             String?
+  imageUrl        String?
+  affiliateLink   String?
+  affiliateId     String?
+  commissionRate  Float?
+  reserved        Boolean   @default(false)
+  reservedById    String?
+  reservedBy      User?     @relation("ItemReservedBy", fields: [reservedById], references: [id])
+  reservedAt      DateTime?
+  priority        Int       @default(0)
+  createdById     String?
+  createdBy_item  User?     @relation("ItemCreatedBy", fields: [createdById], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  reservations Reservation[]
+
+  @@index([listId])
+  @@map("items")
+}
+
+// ============ RÉSERVATIONS ============
+model Reservation {
+  id         String    @id @default(cuid())
+  itemId     String
+  item       Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message    String?
+  anonymous  Boolean   @default(false)
+  status     String    @default("CONFIRMED")
+  canceledAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([itemId])
+  @@index([userId])
+  @@map("reservations")
+}
+
+// ============ GROUPES ============
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  ownerId     String
+  privacy     String   @default("PRIVATE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members UserGroup[]
+  lists   ListGroup[]
+
+  @@map("groups")
+}
+
+model UserGroup {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId  String
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  role     String   @default("MEMBER")
+  joinedAt DateTime @default(now())
+
+  @@unique([userId, groupId])
+  @@map("user_groups")
+}
+
+model ListGroup {
+  id        String   @id @default(cuid())
+  listId    String
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  addedAt   DateTime @default(now())
+  addedById String
+  addedBy   User     @relation("ListGroupAddedBy", fields: [addedById], references: [id])
+
+  @@unique([listId, groupId])
+  @@map("list_groups")
+}
+
+// ============ MEMBRES D'UNE LISTE ============
+// Gère les accès individuels (invitation par email)
+model ListMember {
+  id        String   @id @default(cuid())
+  listId    String
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // VIEWER  → peut voir la liste
+  // EDITOR  → peut voir + ajouter/modifier des items
+  role      String   @default("VIEWER")
+  invitedAt DateTime @default(now())
+  invitedBy String   // userId de celui qui a invité
+
+  @@unique([listId, userId])
+  @@index([listId])
+  @@index([userId])
+  @@map("list_members")
+}
+
+// ============ TOKENS D'INVITATION ============
+// Lien d'invitation envoyé par email ou copié
+model InviteToken {
+  id        String   @id @default(cuid())
+  listId    String
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  role      String   @default("VIEWER")
+  createdBy String   // userId du créateur
+  usedCount Int      @default(0)
+  maxUses   Int      @default(50) // 0 = illimité
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@map("invite_tokens")
+}
+
+// ============ GAMIFICATION ============
+model Points {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalPoints     Int       @default(0)
+  availablePoints Int       @default(0)
+  spentPoints     Int       @default(0)
+  level           Int       @default(1)
+  experience      Int       @default(0)
+  nextLevelExp    Int       @default(100)
+  lastDailyLogin  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("user_points")
+}
+
+model PointTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  points    Int
+  reason    String
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("point_transactions")
+}
+
+model UserBadge {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId     String
+  badgeName   String
+  description String?
+  earnedAt    DateTime @default(now())
+
+  @@map("user_badges")
+}
+
+// ============ LOGS ============
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listId    String?
+  list      List?    @relation(fields: [listId], references: [id])
+  action    String
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("activity_logs")
+}
+
