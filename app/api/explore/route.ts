@@ -20,13 +20,13 @@ function trendingScore(list: {
     viewCount: number
     shareCount: number
     createdAt: Date
-    updateAt: Date
+    updatedAt: Date
     items: { reserved: boolean } []
 }): number {
     const reservedCount = list.items.filter(i => i.reserved).length
-    const now = Date.now
+    const now = Date.now()
     const createdAgo = now - list.createdAt.getTime()
-    const updatedAgo = now - list.updateAt.getTime()
+    const updatedAgo = now - list.updatedAt.getTime()
 
     const ONE_WEEK = 7 * 24 * 60 * 60 * 1000
     const ONE_MONTH = 30 * 24 * 60 * 60 * 1000
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
             viewCount: list.viewCount,
             shareCount: list.shareCount,
             createdAt: list.createdAt,
-            updateAt: list.updatedAt,
+            updatedAt: list.updatedAt,
             items: list.items,
         })
 

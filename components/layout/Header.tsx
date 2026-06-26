@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import styles from './Header.module.css'
+import NotificationBell from "./NotificationBell"
 
 interface CurrentUser {
     id: string
@@ -21,7 +22,7 @@ export default function Header() {
     const [menuOpen, setMenuOpen] = useState(false)
     const [scrolled, setScrolled] = useState(false)
 
-    const menuRef = useRef<HTMLDListElement>(null)
+    const menuRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         const saved = localStorage.getItem('pp_theme') as 'light' | 'dark' | null
@@ -68,6 +69,7 @@ export default function Header() {
     const navLinks = [
         { href: '/explore', label: 'Explorer',   icon: 'fa-compass'  },
         { href: '/lists',   label: 'Mes listes', icon: 'fa-list-ul'  },
+        { href: '/groups', label: 'Groupes', icon: 'fa-users' },
         { href: '/points',  label: 'Points',     icon: 'fa-star'     },
     ]
 
@@ -120,6 +122,9 @@ export default function Header() {
 
             {/* ---- Actions droite ---- */}
             <div className={styles.actions}>
+
+            {user && <NotificationBell />}
+
             {/* Toggle thème */}
             <button
                 className="btn btn-ghost btn-icon"
@@ -177,6 +182,7 @@ export default function Header() {
                     {[
                         { href: '/dashboard', icon: 'fa-home',  label: 'Tableau de bord' },
                         { href: '/profile',   icon: 'fa-user',  label: 'Mon profil'      },
+                        { href: '/reservations', icon: 'fa-hand-holding-heart', label: 'Mes réservations' },
                         { href: '/points',    icon: 'fa-star',  label: 'Mes points'      },
                     ].map(item => (
                         <Link

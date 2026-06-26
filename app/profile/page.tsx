@@ -5,6 +5,7 @@ import { useRouter }           from 'next/navigation'
 import Link                    from 'next/link'
 import PageLayout              from '@/components/layout/PageLayout'
 import styles                  from './page.module.css'
+import { parseUserAgent } from '@/lib/utils/parseUserAgent'
 
 interface UserData {
   id:          string
@@ -21,6 +22,16 @@ interface ProfileData {
   points: { level: number; totalPoints: number; availablePoints: number } | null
   badges: { id: string; badgeName: string }[]
   stats:  { listCount: number; reservationCount: number }
+}
+
+interface SessionInfo {
+  id: string
+  userAgent: string | null
+  ipAddress: string | null
+  createdAt: string
+  lastUsedAt: string | null
+  expiresAt: string
+  isCurrent: boolean
 }
 
 export default function ProfilePage() {
@@ -47,6 +58,10 @@ export default function ProfilePage() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError,   setDeleteError]   = useState('')
 
+  const [sessions, setSessions] = useState<SessionInfo[]>([])
+  const [sessionsLoading, setSessionsLoading] = useState(true)
+  const [revoking, setRevoking] = useState<string | null>(null)
+
   // ---- Chargement ----
   useEffect(() => {
     fetch('/api/profile')
@@ -64,6 +79,10 @@ export default function ProfilePage() {
         console.error('Erreur profil:', err)
         setLoading(false)
       })
+
+    fetch('/api/profile/sessions')
+      .then(r => r.json())
+      .then(d => { setSessions(d); setSessionsLoading(false) })
   }, [])
 
   // ---- Sauvegarder les infos ----
@@ -133,6 +152,19 @@ export default function ProfilePage() {
     } else {
       router.push('/')
     }
+  }
+
+  const revokeSession = async (id: string) => {
+    setRevoking(id)
+    await fetch(`/api/profile/sessions/${id}`, { method: 'DELETE' })
+    setSessions(prev => prev.filter(s => s.id !== id))
+    setRevoking(null)
+  }
+
+  const revokeAllOthers = async () => {
+    if (!confirm('Déconnecter tous les autres appareils ?')) return
+    await fetch('/api/profile/sessions/revoke-all', { method: 'POST' })
+    setSessions(prev => prev.filter(s => s.isCurrent))
   }
 
   // ---- Loading ----
@@ -337,6 +369,67 @@ export default function ProfilePage() {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* Sessions actives */}
+        <div className={styles.section}>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>
+              <i className="fas fa-desktop" /> Sessions actives
+            </h2>
+            {sessions.length > 1 && (
+              <button className="btn btn-ghost btn-sm" onClick={revokeAllOthers}>
+                Déconnecter les autres
+              </button>
+            )}
+          </div>
+
+          <div style={{ padding: 'var(--s-2)' }}>
+            {sessionsLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--s-6)' }}>
+                <span className="spinner" />
+              </div>
+            ) : (
+              sessions.map(s => {
+                const { browser, os, icon } = parseUserAgent(s.userAgent)
+                return (
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-4)', padding: 'var(--s-4)' }}>
+                    <div style={{
+                      width: 40, height: 40, borderRadius: 'var(--r-md)',
+                      background: s.isCurrent ? 'rgba(72,187,120,0.1)' : 'var(--surface-2)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: s.isCurrent ? 'var(--success)' : 'var(--text-3)',
+                      flexShrink: 0,
+                    }}>
+                      <i className={`fas ${icon}`} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                        {browser} sur {os}
+                        {s.isCurrent && <span className="badge badge-success" style={{ marginLeft: 8 }}>Cet appareil</span>}
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>
+                        {s.ipAddress && `${s.ipAddress} · `}
+                        Dernière activité {s.lastUsedAt
+                          ? new Date(s.lastUsedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                          : 'inconnue'}
+                      </div>
+                    </div>
+                    {!s.isCurrent && (
+                      <button
+                        className="btn btn-ghost btn-icon btn-sm"
+                        onClick={() => revokeSession(s.id)}
+                        disabled={revoking === s.id}
+                        title="Déconnecter"
+                      >
+                        {revoking === s.id ? <span className="spinner" /> : <i className="fas fa-sign-out-alt" />}
+                      </button>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
         </div>
 
         {/* ==================================================

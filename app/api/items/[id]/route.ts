@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth/sqlite-auth";
-import { success, z } from "zod";
+import { z } from "zod";
 import { generateAffiliateLink } from "@/lib/affiliate";
-import { error } from "console";
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -50,14 +49,16 @@ const UpdateSchema = z.object({
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getSession()
     if (!session) {
         return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
-    const { allowed, item } = await canEditItem(params.id, session.userId)
+    const { id } = await params
+
+    const { allowed, item } = await canEditItem(id, session.userId)
     if (!allowed || !item) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
@@ -94,7 +95,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.item.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
             ...(parsed.data.title !== undefined ? { title: parsed.data.title } : {}),
             ...(parsed.data.description !== undefined ? { description: parsed.data.description } : {}),
@@ -114,14 +115,16 @@ export async function PATCH(
 // DELETE - Supprimer un item
 export async function DELETE(
     _req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getSession()
     if (!session) {
         return NextResponse.json({ error: 'Non authentifié' }, { status: 403 })
     }
 
-    await prisma.item.delete({ where: { id: params.id } })
+    const { id } = await params
+
+    await prisma.item.delete({ where: { id: id } })
 
     return NextResponse.json({ success: true })
 }

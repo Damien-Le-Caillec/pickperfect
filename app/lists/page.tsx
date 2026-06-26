@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { validateSession } from "@/lib/auth/sqlite-auth";
 import { prisma } from "@/lib/prisma";
 import PageLayout from "@/components/layout/PageLayout";
-import styles from '.page.module.css'
+import styles from './page.module.css'
 
 const BAND: Record<string, string> = {
     PUBLIC: 'linear-gradient(90deg, var(--mint), var(--mint-dark))',

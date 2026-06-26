@@ -1,0 +1,102 @@
+.wrap { position: relative; }
+
+.badge {
+  position: absolute;
+  top: -2px; right: -2px;
+  background: var(--error);
+  color: white;
+  font-size: 0.62rem;
+  font-weight: 800;
+  min-width: 16px;
+  height: 16px;
+  border-radius: var(--r-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 2px solid var(--surface);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 340px;
+  max-height: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 150;
+  animation: fadeIn 0.15s ease;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--border-1);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.markAll {
+  background: none;
+  border: none;
+  color: var(--peach-dark);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.list { overflow-y: auto; }
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--border-1);
+  text-decoration: none !important;
+  color: var(--text-1) !important;
+  transition: background var(--ease);
+  position: relative;
+}
+.item:last-child { border-bottom: none; }
+.item:hover { background: var(--surface-2); }
+.item.unread { background: rgba(255,154,139,0.04); }
+
+.itemIcon {
+  width: 32px; height: 32px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--peach);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.itemBody { flex: 1; min-width: 0; }
+.itemTitle { font-size: 0.85rem; font-weight: 700; margin-bottom: 2px; }
+.itemMsg { font-size: 0.8rem; color: var(--text-2); margin-bottom: 4px; }
+.itemDate { font-size: 0.7rem; color: var(--text-3); }
+
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--peach);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.empty {
+  text-align: center;
+  padding: var(--s-8) var(--s-5);
+  color: var(--text-3);
+}
+.empty i { font-size: 1.5rem; margin-bottom: var(--s-2); opacity: 0.5; }
+.empty p { font-size: 0.85rem; }

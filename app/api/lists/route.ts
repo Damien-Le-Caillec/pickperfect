@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { z } from "zod";
-import { prisma } from '@/lib/prisma';
+import { z } from 'zod'
+import { prisma } from '@/lib/prisma'
 import { validateSession } from "@/lib/auth/sqlite-auth";
-import { parse } from "path";
-import { error } from "console";
+import { addPoints } from '@/lib/gamification/pointsService'
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -13,7 +12,7 @@ async function getSession() {
     return validateSession(id)
 }
 
-const  CreateSchema = z.object({
+const CreateSchema = z.object({
     title: z.string().min(1, 'Titre requis').max(100),
     description: z.string().max(500).optional(),
     privacy: z.enum(['PUBLIC', 'UNLISTED', 'PRIVATE']).default('UNLISTED'),
@@ -21,7 +20,6 @@ const  CreateSchema = z.object({
     budget: z.number().positive().optional(),
 })
 
-// GET /api/lists — Mes listes
 export async function GET() {
     const session = await getSession()
     if (!session) {
@@ -31,7 +29,7 @@ export async function GET() {
     const lists = await prisma.list.findMany({
         where: { userId: session.userId },
         include: {
-            _count: { select: { items: true } },
+            _count: { select: {items: true } },
             items: { select: { reserved: true } },
         },
         orderBy: { updatedAt: 'desc' },
@@ -40,7 +38,6 @@ export async function GET() {
     return NextResponse.json(lists)
 }
 
-// POST /api/lists - Créer une liste 
 export async function POST(request: NextRequest) {
     const session = await getSession()
     if (!session) {
@@ -67,14 +64,12 @@ export async function POST(request: NextRequest) {
         },
     })
 
-    // log d'activité
     await prisma.activityLog.create({
-        data: {
-            userId: session.userId,
-            listId: list.id,
-            action: 'LIST_CREATED',
-        },
+        data: { userId: session.userId, listId: list.id, action: 'LIST_CREATED' },
     })
+
+    // Points création liste
+    await addPoints(session.userId, 'list_created').catch(() => {})
 
     return NextResponse.json(list, { status: 201 })
 }

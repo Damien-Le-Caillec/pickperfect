@@ -59,12 +59,20 @@ export async function validateUser(email: string, password: string) {
 }
 
 // ---- Créer une session ----
-export async function createSession(userId: string) {
-  // Expire dans 30 jours
+export async function createSession(
+  userId: string,
+  meta?: { userAgent?: string; ipAddress?: string}
+) {
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
   return prisma.session.create({
-    data: { userId, expiresAt },
+    data: {
+      userId,
+      expiresAt,
+      userAgent: meta?.userAgent,
+      ipAddress: meta?.ipAddress,
+      lastUsedAt: new Date(),
+    },
   })
 }
 

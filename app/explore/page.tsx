@@ -75,7 +75,7 @@ function daysUntil(dateStr: string): number {
 }
 
 // Formater la date d'événement
-function FormatEventDate(dateStr: string): string {
+function formatEventDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('fr-FR', {
         day: 'numeric', month: 'long', year: 'numeric',
     })

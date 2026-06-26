@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth/sqlite-auth";
-import { error } from "console";
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -14,10 +13,12 @@ async function getSession() {
 // GET /api/lists/[id]
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
+
   const list = await prisma.list.findUnique({
-    where:   { id: params.id },
+    where:   { id: id },
     include: {
       user:    { select: { id: true, name: true, email: true } },
       members: {
@@ -53,7 +54,7 @@ export async function GET(
   }
 
   prisma.list.update({
-    where: { id: params.id },
+    where: { id: id },
     data:  { viewCount: { increment: 1 } },
   }).catch(() => {})
 
@@ -63,14 +64,15 @@ export async function GET(
 // PATCH /api/lists/[id] - Modifier une liste
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: {id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getSession()
+    const { id } = await params
     if (!session) {
         return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
-    const list = await prisma.list.findUnique({ where: { id: params.id } })
+    const list = await prisma.list.findUnique({ where: { id: id } })
     if (!list) {
         return NextResponse.json({ error: 'Introuvable' }, { status: 404 })
     }
@@ -80,7 +82,7 @@ export async function PATCH(
 
     const body = await request.json()
     const updated = await prisma.list.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
             title: body.title,
             description: body.description,
@@ -96,14 +98,15 @@ export async function PATCH(
 // DELETE /api/lists/[id]
 export async function DELETE(
     _req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     const session = await getSession()
     if (!session) {
         return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
-    const list = await prisma.list.findUnique({ where: { id: params.id } })
+    const list = await prisma.list.findUnique({ where: { id: id } })
     if (!list) {
         return NextResponse.json({ error: 'Introuvable' }, { status: 404 })
     }
@@ -111,7 +114,7 @@ export async function DELETE(
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 
-    await prisma.list.delete({ where: { id: params.id } })
+    await prisma.list.delete({ where: { id: id } })
 
     return NextResponse.json({ success: true })
 }

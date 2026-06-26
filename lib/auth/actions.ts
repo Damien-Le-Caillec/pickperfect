@@ -47,7 +47,7 @@ export async function registerAction(
 
   const parsed = RegisterSchema.safeParse(raw)
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   try {
@@ -77,7 +77,7 @@ export async function loginAction(
 
   const parsed = LoginSchema.safeParse(raw)
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   const user = await validateUser(parsed.data.email, parsed.data.password)

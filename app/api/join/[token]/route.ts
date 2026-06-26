@@ -12,8 +12,9 @@ async function getSession() {
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
+  const { token } = await params
   const session = await getSession()
   if (!session) {
     return NextResponse.json(
@@ -24,7 +25,7 @@ export async function POST(
 
   // Trouver le token
   const invite = await prisma.inviteToken.findUnique({
-    where: { token: params.token },
+    where: { token: token },
   })
 
   if (!invite) {
@@ -81,7 +82,7 @@ export async function POST(
       }),
       // Incrémenter le compteur d'utilisations
       prisma.inviteToken.update({
-        where: { token: params.token },
+        where: { token: token },
         data:  { usedCount: { increment: 1 } },
       }),
     ])

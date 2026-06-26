@@ -50,6 +50,13 @@ interface ListData {
   members:       Member[]
 }
 
+interface CommentData {
+  id: string
+  content: string
+  createdAt: string
+  user: { id: string; name: string | null }
+}
+
 // ============================================================
 // COMPOSANT
 // ============================================================
@@ -110,6 +117,14 @@ export default function ListDetailPage() {
   const [editListLoading, setEditListLoading] = useState(false)
   const [editListError,   setEditListError]   = useState('')
 
+  const [uploadingImg, setUploadingImg] = useState(false)
+  const [uploadingEditImg, setUploadingEditImg] = useState(false)
+
+  const [commentsOpen, setCommentsOpen] = useState<string | null> (null)
+  const [comments, setComments] = useState<CommentData[]>([])
+  const [commentText, setCommentText] = useState('')
+  const [commentsLoad, setCommentsLoad] = useState(false)
+  const [commentSend, setCommentSend] = useState(false)
   // ============================================================
   // CHARGEMENT
   // ============================================================
@@ -128,6 +143,39 @@ export default function ListDetailPage() {
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.success) setMe({ id: d.user.id }) })
   }, [loadList])
+
+  // upload image
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingImg(true)
+
+    const fd = new FormData()
+    fd.append('file', file)
+
+    const res = await fetch('/api/upload', { method: 'POST', body: fd })
+    const data = await res.json()
+
+    setUploadingImg(false)
+
+    if (res.ok) {
+      setNewItem(p => ({ ...p, imageUrl: data.imageUrl }))
+    }
+  }
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingEditImg(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/upload', { method: 'POST', body: fd })
+    const data = await res.json()
+    setUploadingEditImg(false)
+    if (res.ok) setEditForm(p => ({ ...p, imageUrl: data.imageUrl }))
+  }
 
   // ============================================================
   // FILTRAGE & TRI
@@ -348,6 +396,7 @@ export default function ListDetailPage() {
       }),
     })
 
+
     const data = await res.json()
     setEditListLoading(false)
 
@@ -355,6 +404,39 @@ export default function ListDetailPage() {
     setEditListOpen(false)
     await loadList()
   }
+
+  const openComments = async (itemId: string) => {
+      setCommentsOpen(itemId)
+      setCommentsLoad(true)
+      const res = await fetch(`/api/items/${itemId}/comments`)
+      const data = await res.json()
+      setComments(data)
+      setCommentsLoad(false)
+    }
+
+    const sendComment = async () => {
+      if (!commentText.trim() || !commentsOpen) return
+      setCommentSend(true)
+
+      const res = await fetch(`/api/items/${commentsOpen}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: commentText }),
+      })
+
+      setCommentSend(false)
+
+      if (res.ok) {
+        const newComment = await res.json()
+        setComments(prev => [...prev, newComment])
+        setCommentText('')
+      }
+    }
+
+    const deleteComment = async (commentId: string) => {
+      await fetch(`/api/comments/${commentId}`, { method: 'DELETE' })
+      setComments(prev => prev.filter(c => c.id !== commentId))
+    }
 
   // ============================================================
   // HELPERS
@@ -525,6 +607,85 @@ export default function ListDetailPage() {
                     placeholder="99.90" step="0.01" min="0"
                   />
                 </div>
+              </div>
+              {/* Upload ou URL d'image */}
+              <div className='form-group' style={{ marginBottom: 'var(--s-5)' }}>
+                <label className='label'>
+                  Image <span className='form-hint'>(optionnel)</span>
+                </label>
+
+                {/* Tabs : Upload / URL */}
+                <div style={{ display: 'flex', gap: 'var(--s-2)', marginBottom: 'var(--s-3)' }}>
+                  <label style={{
+                    flex: 1,
+                    padding: 'var(--s-3)',
+                    border: '1.5px dashed var(--border-2)',
+                    borderRadius: 'var(--r-md)',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    fontSize: '0.85rem',
+                    color: 'var(--text-2)',
+                    transition: 'all var(--ease)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 'var(--s-2)',
+                  }}>
+                    <input
+                      type='file'
+                      accept='image/*'
+                      onChange={handleImageUpload}
+                      style={{ display: 'none' }}
+                      disabled={uploadingImg}
+                    />
+                    {uploadingImg
+                      ? <><span className='spinner' /> Envoi...</>
+                      : <><i className='fas fa-upload' /> Uploader une photo</>
+                    }
+                  </label>
+                </div>
+
+                {/* URL manuelle */}
+                <input
+                  type='url'
+                  value={newItem.imageUrl}
+                  onChange={e => setNewItem(p => ({ ...p, imageUrl: e.target.value }))}
+                  placeholder="Ou coller une URL d'image..."
+                />
+
+                {/* Aperçu */}
+                {newItem.imageUrl && (
+                  <div style={{ marginTop: 'var(--s-3)', position: 'relative', display: 'inline-block' }}>
+                    <img
+                      src={newItem.imageUrl}
+                      alt='Aperçu'
+                      style={{ height: 80, borderRadius: 'var(--r-md)', objectFit: 'cover', display: 'block' }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                    <button
+                      type='button'
+                      onClick={() => setNewItem(p => ({ ...p, imageUrl: '' }))}
+                      style={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        width: 22,
+                        height: 22,
+                        borderRadius: '50%',
+                        background: 'var(--error)',
+                        color: 'white',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <i className='fas fa-times' />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="form-group" style={{ marginBottom: 'var(--s-5)' }}>
@@ -811,6 +972,14 @@ export default function ListDetailPage() {
                           </button>
                         )}
 
+                        <button
+                          className='btn btn-ghost btn-icon btn-sm'
+                          onClick={() => openComments(item.id)}
+                          title='Commentaires'
+                        >
+                          <i className='fas fa-comment' />
+                        </button>
+
                         {(isOwner || item.createdById === me?.id) && (
                           <button className="btn btn-danger btn-icon btn-sm" onClick={() => handleDelete(item.id)} title="Supprimer">
                             <i className="fas fa-trash" />
@@ -938,10 +1107,23 @@ export default function ListDetailPage() {
               </div>
 
               <div className="form-group" style={{ marginBottom: 'var(--s-4)' }}>
-                <label className="label" htmlFor="editImg">URL de l'image</label>
-                <input id="editImg" type="url" value={editForm.imageUrl} onChange={e => setEditForm(p => ({ ...p, imageUrl: e.target.value }))} placeholder="https://..." />
+                <label className="label" htmlFor="editImg">Image</label>
+                
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--s-2)', padding: 'var(--s-3)', border: '1.5px dashed var(--border-2)', borderRadius: 'var(--r-md)', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-2)', marginBottom: 'var(--s-2)' }}>
+                  <input type='file' accept='image/*' onChange={handleEditImageUpload} style={{ display: 'none' }} disabled={uploadingEditImg} />
+                    {uploadingEditImg ? <><span className='spinner' /> Envoi...</> :
+                    <><i className='fas fa-upload' /> Uploader une photo</>}
+                </label>
+                <input
+                  id='editImg'
+                  type='url'
+                  value={editForm.imageUrl}
+                  onChange={e => setEditForm(p => ({ ...p, imageUrl: e.target.value }))}
+                  placeholder='Ou coller une URL...'
+                />
+
                 {editForm.imageUrl && (
-                  <img src={editForm.imageUrl} alt="Aperçu" style={{ marginTop: 'var(--s-2)', height: 60, borderRadius: 'var(--r-md)', objectFit: 'cover' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                  <img src={editForm.imageUrl} alt='Aperçu' style={{ marginTop: 'var(--s-2)', height: 60, borderRadius: 'var(--r-md)', objectFit: 'cover' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                 )}
               </div>
 
@@ -1034,6 +1216,70 @@ export default function ListDetailPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </>
+      )}
+
+      {commentsOpen && (
+        <>
+          <div onClick={() => setCommentsOpen(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, backdropFilter: 'blur(4px)' }} />
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: 'var(--surface)', border: '1px solid var(--border-1)', borderRadius: 'var(--r-2xl)', padding: 'var(--s-6)', width: '100%', maxWidth: 460, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-xl)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--s-4)' }}>
+              <h2 style={{ fontWeight: 800, fontSize: '1.05rem' }}>
+                <i className='fas fa-comments' style={{ marginRight: 8, color: 'var(--peach)' }} /> Commentaires
+              </h2>
+              <button className='btn btn-ghost btn-icon btn-sm' onClick={() => setCommentsOpen(null)}>
+                <i className='fas fa-times' />
+              </button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', marginBottom: 'var(--s-4)', minHeight: 120 }}>
+              {commentsLoad ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding:'var(--s-6)' }}><span className='spinner' /></div>
+              ) : comments.length === 0 ? (
+                <p style={{ color: 'var(--text-3)', fontSize: '0.875rem', textAlign: 'center', padding: 'var(--s-6) 0' }}>
+                  Aucun commentaire pour l'instant.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
+                  {comments.map(c => (
+                    <div key={c.id} style={{ display: 'flex', gap: 'var(--s-3)' }}>
+                      <div className="avatar avatar-xs">{c.user.name?.[0]?.toUpperCase() ?? '?'}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ background: 'var(--surface-2)', borderRadius: 'var(--r-lg)', padding: 'var(--s-3)' }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 2 }}>{c.user.name ?? 'Anonyme'}</div>
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-2)' }}>{c.content}</div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
+                            {new Date(c.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {c.user.id === me?.id && (
+                            <button onClick={() => deleteComment(c.id)} style={{ background: 'none', border: 'none', color: 'var(--error)', fontSize: '0.7rem', cursor: 'pointer' }}>
+                              Supprimer
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: 'var(--s-2)' }}>
+              <input 
+                type="text"
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') sendComment() }}
+                placeholder='Ecrire un commentaire...'
+                maxLength={500} 
+              />
+              <button className='btn btn-primary btn-icon' onClick={sendComment} disabled={commentSend || !commentText.trim()}>
+                {commentSend ? <span className='spinner' /> : <i className='fas fa-paper-plane' />}
+              </button>
+            </div>
           </div>
         </>
       )}

@@ -14,15 +14,16 @@ async function getSession() {
 //POST - Créer un lien d'invitation
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     const session = await getSession()
     if (!session) {
         return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
     // Vérifier que l'utilisateur est propriétaire ou éditeur
-    const list = await prisma.list.findUnique({ where: { id: params.id } })
+    const list = await prisma.list.findUnique({ where: { id: id } })
     if (!list) {
         return NextResponse.json({ error: 'Introuvable' }, { status: 404 })
     }
@@ -40,7 +41,7 @@ export async function POST(
 
     const invite = await prisma.inviteToken.create({
         data: {
-        listId:    params.id,
+        listId:    id,
         token,
         role,
         createdBy: session.userId,
@@ -58,20 +59,21 @@ export async function POST(
 // GET — Voir les membres actuels
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const session = await getSession()
   if (!session) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
   }
 
-  const list = await prisma.list.findUnique({ where: { id: params.id } })
+  const list = await prisma.list.findUnique({ where: { id: id } })
   if (!list || list.userId !== session.userId) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
   }
 
   const members = await prisma.listMember.findMany({
-    where:   { listId: params.id },
+    where:   { listId: id },
     include: { user: { select: { id: true, name: true, email: true } } },
     orderBy: { invitedAt: 'asc' },
   })
@@ -82,14 +84,15 @@ export async function GET(
 // DELETE — Retirer un membre
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const session = await getSession()
   if (!session) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
   }
 
-  const list = await prisma.list.findUnique({ where: { id: params.id } })
+  const list = await prisma.list.findUnique({ where: { id: id } })
   if (!list || list.userId !== session.userId) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
   }

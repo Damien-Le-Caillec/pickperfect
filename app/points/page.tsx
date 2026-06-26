@@ -65,6 +65,9 @@ export default function PointsPage() {
   const [earnedBadges, setEarnedBadges] = useState<Badge[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading,      setLoading]      = useState(true)
+  const [redeeming, setRedeeming] = useState<string | null>(null)
+  const [redeemMsg, setRedeemMsg] = useState('')
+  const [redeemError, setRedeemError] = useState('')
 
   useEffect(() => {
     fetch('/api/points')
@@ -76,6 +79,37 @@ export default function PointsPage() {
         setLoading(false)
       })
   }, [])
+
+  const handleRedeem = async (rewardId: string, rewardName: string, cost: number) => {
+    if (!confirm(`Echanger ${cost.toLocaleString('fr-FR')} points contre "${rewardName}" ?`)) return
+
+    setRedeeming(rewardId)
+    setRedeemMsg('')
+    setRedeemError('')
+
+    const res = await fetch('/api/points/redeem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rewardId }),
+    })
+    const data = await res.json()
+    setRedeeming(null)
+
+    if (!res.ok) {
+      setRedeemError(data.error)
+      return
+    }
+
+    setRedeemMsg(data.message)
+
+    // Recharger les données pour mettre à jour le solde
+    fetch('/api/points')
+      .then(r => r.json())
+      .then(d => {
+        setPoints(d.points)
+        setTransactions(d.transaction)
+      })
+  }
 
   if (loading) {
     return (
@@ -175,44 +209,55 @@ export default function PointsPage() {
             RÉCOMPENSES
         ================================================== */}
         {tab === 'rewards' && (
-          <div className={styles.rewardsGrid}>
-            {REWARDS.map(reward => {
-              const locked  = available < reward.cost
-              const missing = reward.cost - available
+          <>
+            {redeemMsg && (
+              <div className='alert alert-success' style={{ marginBottom: 'var(--s-4)' }}>
+                <i className='fas fa-check-circle' /> {redeemMsg}
+              </div>
+            )}
+            { redeemError && (
+              <div className='alert alert-error' style={{ marginBottom: 'var(--s-4)' }}>
+                <i className='fas fa-exclamation-circle' /> {redeemError}
+              </div>
+            )}
 
-              return (
-                <div
-                  key={reward.id}
-                  className={`${styles.rewardCard} ${locked ? styles.locked : ''}`}
-                >
-                  <div
-                    className={styles.rewardIconWrap}
-                    style={{ background: REWARD_COLORS[reward.category] }}
-                  >
-                    <i className={`fas ${reward.icon}`} />
-                  </div>
+            <div className={styles.rewardsGrid}>
+              {REWARDS.map(reward => {
+                const locked = available < reward.cost
+                const missing = reward.cost - available
 
-                  <div className={styles.rewardName}>{reward.name}</div>
-                  <div className={styles.rewardDesc}>{reward.desc}</div>
-
-                  <div className={styles.rewardCost}>
-                    {reward.cost.toLocaleString('fr-FR')} pts
-                  </div>
-
-                  {locked ? (
-                    <div className={styles.rewardMissing}>
-                      <i className="fas fa-lock" style={{ marginRight: 4 }} />
-                      {missing.toLocaleString('fr-FR')} pts manquants
+                return (
+                  <div key={reward.id} className={`${styles.rewardCard} ${locked ? styles.locked : ''}`}>
+                    <div className={styles.rewardIconWrap} style={{ background: REWARD_COLORS[reward.category] }}>
+                      <i className={`fas ${reward.icon}`} />
                     </div>
-                  ) : (
-                    <button className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
-                      <i className="fas fa-exchange-alt" /> Échanger
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+                    <div className={styles.rewardName}>{reward.name}</div>
+                    <div className={styles.rewardDesc}>{reward.desc}</div>
+                    <div className={styles.rewardCost}>{reward.cost.toLocaleString('fr-FR')} pts</div>
+
+                    {locked ? (
+                      <div className={styles.rewardMissing}>
+                        <i className='fas fa-lock' style={{ marginRight: 4 }} />
+                        {missing.toLocaleString('fr-FR')} pts manquants
+                      </div>
+                    ) : (
+                      <button
+                        className='btn btn-primary btn-sm'
+                        style={{ width: '100%', justifyContent: 'center' }}
+                        onClick={() => handleRedeem(reward.id, reward.name, reward.cost)}
+                        disabled={redeeming === reward.id}
+                      >
+                        {redeeming === reward.id
+                          ? <><span className='spinner' /> Echange...</>
+                          : <><i className='fas fa-exchange-alt' /> Echanger</>
+                        }
+                      </button>
+                    )} 
+                  </div>
+                )
+              })}
+            </div>
+          </>
         )}
 
         {/* ==================================================

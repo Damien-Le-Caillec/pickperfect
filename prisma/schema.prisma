@@ -36,6 +36,8 @@ model User {
   groups          UserGroup[]
   listMemberships ListMember[]
   itemsCreated    Item[]       @relation("ItemCreatedBy")
+  comments Comment[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -47,6 +49,9 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+  userAgent String?
+  ipAddress String?
+  lastUsedAt DateTime?
 
   @@index([userId])
   @@map("sessions")
@@ -118,9 +123,41 @@ model Item {
   updatedAt       DateTime  @updatedAt
 
   reservations Reservation[]
+  comments Comment[]
 
   @@index([listId])
   @@map("items")
+}
+
+// Commentaires
+model Comment {
+  id String @id @default(cuid())
+  itemId String
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content String
+  createdAt DateTime @default(now())
+
+  @@index([itemId])
+  @@map("comments")
+}
+
+// Notification
+
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type String
+  title String
+  message String
+  link String?
+  read Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("notifications")
 }
 
 // ============ RÉSERVATIONS ============
@@ -153,7 +190,8 @@ model Group {
 
   members UserGroup[]
   lists   ListGroup[]
-
+  inviteTokens GroupInviteToken[]
+  
   @@map("groups")
 }
 
@@ -182,6 +220,21 @@ model ListGroup {
 
   @@unique([listId, groupId])
   @@map("list_groups")
+}
+
+model GroupInviteToken {
+  id String @id @default(cuid())
+  groupId String
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  token String @unique
+  createdBy String
+  usedCount Int @default(0)
+  maxUses Int @default(50)
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@map("group_invite_tokens")
 }
 
 // ============ MEMBRES D'UNE LISTE ============
