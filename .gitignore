@@ -42,6 +42,3 @@ next-env.d.ts
 
 
 public/uploads/
-.env.production
-backup.sh
-deploy.sh.log
