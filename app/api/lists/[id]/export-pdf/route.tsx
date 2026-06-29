@@ -141,7 +141,7 @@ export async function GET(
         </Document>
     )
 
-    return new NextResponse(buffer, {
+    return new NextResponse(buffer as unknown as BodyInit, {
         headers: {
         'Content-Type':        'application/pdf',
         'Content-Disposition': `attachment; filename="${list.title.replace(/[^a-zA-Z0-9]/g, '-')}.pdf"`,

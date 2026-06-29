@@ -25,7 +25,7 @@ export async function GET() {
                     { receiverId: session.userId, status: 'ACCEPTED' },
                 ],
             },
-            includes: {
+            include: {
                 sender: { select: { id: true, name: true, email: true } },
                 receiver: { select: { id: true, name: true, email: true } },
             },
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     await CreateNotification({
         userId: target.id,
-        type: 'FRIEND_REQUEST',
+        type: 'GROUP_INVITE',
         title: 'Nouvelle demande d\'ami',
         message: `${session.user.name ?? 'Quelqu\'un'} veut vous ajouter comme ami`,
         link: '/friends',

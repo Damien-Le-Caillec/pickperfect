@@ -29,17 +29,18 @@ export async function GET() {
 
     const now = new Date()
     const enriched = birthdays.map(b => {
-        const date = new Date(b.date)
-        const next = new Date(now.getFullYear(), date.getMonth(), date.getDate())
+        const date     = new Date(b.date)
+        const next     = new Date(now.getFullYear(), date.getMonth(), date.getDate())
         if (next < now) next.setFullYear(now.getFullYear() + 1)
         const daysLeft = Math.ceil((next.getTime() - now.getTime()) / 86400000)
         return { ...b, daysLeft, nextDate: next.toISOString() }
-
-        enriched.sort((a, b) => a.daysLeft - b.daysLeft)
-
-        return NextResponse.json(enriched)
     })
+
+    enriched.sort((a, b) => a.daysLeft - b.daysLeft)
+
+    return NextResponse.json(enriched)
 }
+
 
 export async function POST(request: NextRequest) {
     const session = await getSession()
