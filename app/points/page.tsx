@@ -60,7 +60,7 @@ function txStyle(type: string, reason: string) {
 }
 
 export default function PointsPage() {
-  const [tab,          setTab]          = useState<'rewards' | 'badges' | 'history'>('rewards')
+  const [tab, setTab] = useState<'rewards' | 'badges' | 'challenges' | 'history'>('rewards')
   const [points,       setPoints]       = useState<Points | null>(null)
   const [earnedBadges, setEarnedBadges] = useState<Badge[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -68,6 +68,7 @@ export default function PointsPage() {
   const [redeeming, setRedeeming] = useState<string | null>(null)
   const [redeemMsg, setRedeemMsg] = useState('')
   const [redeemError, setRedeemError] = useState('')
+  const [challenges, setChallenges] = useState<any[]>([])
 
   useEffect(() => {
     fetch('/api/points')
@@ -78,6 +79,7 @@ export default function PointsPage() {
         setTransactions(data.transactions)
         setLoading(false)
       })
+    fetch('/api/challenges').then(r => r.json()).then(d => setChallenges(d))
   }, [])
 
   const handleRedeem = async (rewardId: string, rewardName: string, cost: number) => {
@@ -177,6 +179,13 @@ export default function PointsPage() {
                 <span className={styles.heroStatNum}>{(points?.spentPoints ?? 0).toLocaleString('fr-FR')}</span>
                 <span className={styles.heroStatLabel}>dépensés</span>
               </div>
+              {/* ← Streak */}
+              <div className={styles.heroStat}>
+                <span className={styles.heroStatNum} style={{ color: (points?.currentStreak ?? 0) >= 3 ? 'var(--peach-dark)' : undefined }}>
+                  {(points?.currentStreak ?? 0) >= 1 && '🔥'} {points?.currentStreak ?? 0}j
+                </span>
+                <span className={styles.heroStatLabel}>streak actuel</span>
+              </div>
               <div className={styles.heroStat}>
                 <span className={styles.heroStatNum}>{allBadges.filter(b => b.earned).length}/{allBadges.length}</span>
                 <span className={styles.heroStatLabel}>badges</span>
@@ -192,6 +201,7 @@ export default function PointsPage() {
           {[
             { id: 'rewards' as const, label: 'Récompenses', icon: 'fa-gift'    },
             { id: 'badges'  as const, label: 'Badges',      icon: 'fa-medal'   },
+            { id: 'challenges' as const, label: 'Défis', icon: 'fa-fire' },
             { id: 'history' as const, label: 'Historique',  icon: 'fa-history' },
           ].map(t => (
             <button

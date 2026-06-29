@@ -6,6 +6,7 @@ import { addPoints } from "@/lib/gamification/pointsService";
 import { sendEmail } from "@/lib/email/mailer";
 import { reservationEmail } from "@/lib/email/templates";
 import { CreateNotification } from "@/lib/notifications";
+import { progressChallenge, ensureWeeklyChallenges } from '@/lib/gamification/challenges'
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -79,6 +80,8 @@ export async function POST(
     // Points réservation
     await addPoints(session.userId, 'item_reservation').catch(() => {})
 
+    await ensureWeeklyChallenges(session.userId).catch(() => {})
+    await progressChallenge(session.userId, 'reserve_3').catch(() => {})
     // Récupérer le propriétaire et l'item pour l'email
     const fullItem = await prisma.item.findUnique({
         where: { id: id },

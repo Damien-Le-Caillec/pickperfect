@@ -81,20 +81,46 @@ export async function processDailyLogin(userId: string): Promise<number> {
   const now = new Date()
 
   if (p?.lastDailyLogin) {
-    const last     = p.lastDailyLogin
-    const sameDay  =
+    const last    = p.lastDailyLogin
+    const sameDay =
       last.getFullYear() === now.getFullYear() &&
       last.getMonth()    === now.getMonth()    &&
       last.getDate()     === now.getDate()
 
     if (sameDay) return 0
-  }
 
-  await prisma.points.upsert({
-    where:  { userId },
-    create: { userId, lastDailyLogin: now },
-    update: { lastDailyLogin: now },
-  })
+    // Vérifier si la connexion d'hier existait (streak)
+    const yesterday = new Date(now)
+    yesterday.setDate(now.getDate() - 1)
+    const wasYesterday =
+      last.getFullYear() === yesterday.getFullYear() &&
+      last.getMonth()    === yesterday.getMonth()    &&
+      last.getDate()     === yesterday.getDate()
+
+    const newStreak = wasYesterday ? (p.currentStreak ?? 0) + 1 : 1
+
+    await prisma.points.upsert({
+      where:  { userId },
+      create: { userId, lastDailyLogin: now, currentStreak: 1, longestStreak: 1 },
+      update: {
+        lastDailyLogin: now,
+        currentStreak:  newStreak,
+        longestStreak:  { set: Math.max(p.longestStreak ?? 0, newStreak) },
+      },
+    })
+
+    // Bonus streak 7 jours
+    if (newStreak === 7) {
+      await addPoints(userId, 'daily_login_streak_7')
+    }
+
+  } else {
+    await prisma.points.upsert({
+      where:  { userId },
+      create: { userId, lastDailyLogin: now, currentStreak: 1, longestStreak: 1 },
+      update: { lastDailyLogin: now, currentStreak: 1, longestStreak: 1 },
+    })
+  }
 
   await addPoints(userId, 'daily_login')
   return POINTS_TABLE.daily_login

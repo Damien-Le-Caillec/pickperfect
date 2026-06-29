@@ -5,6 +5,7 @@ import { checkRateLimit } from "@/lib/security/rateLimit";
 import { processDailyLogin } from "@/lib/gamification/pointsService";
 import { error } from "console";
 import { success } from "zod";
+import { progressChallenge, ensureWeeklyChallenges } from '@/lib/gamification/challenges'
 
 export async function POST(request: NextRequest) {
     // Rate limiting
@@ -67,6 +68,9 @@ export async function POST(request: NextRequest) {
 
     // Points connexion quotidienne
     await processDailyLogin(user.id).catch(() => {})
+
+    await ensureWeeklyChallenges(user.id).catch(() => {})
+    await progressChallenge(user.id, 'login_5').catch(() => {})
 
     return NextResponse.json({ success: true })
 }

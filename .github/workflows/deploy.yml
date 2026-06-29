@@ -1,0 +1,41 @@
+name: Deploy to Mac Mini
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Connexion Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id:     ${{ secrets.TAILSCALE_CLIENT_ID }}
+          oauth-secret:        ${{ secrets.TAILSCALE_CLIENT_SECRET }}
+          tags:                tag:ci
+
+      - name: Déploiement SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:        ${{ secrets.MAC_HOST }}
+          username:    ${{ secrets.MAC_USER }}
+          key:         ${{ secrets.MAC_SSH_KEY }}
+          port:        22
+          script_stop: true
+          script: |
+            bash ~/pickperfect/deploy.sh
+
+      - name: Vérification
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.MAC_HOST }}
+          username: ${{ secrets.MAC_USER }}
+          key:      ${{ secrets.MAC_SSH_KEY }}
+          port:     22
+          script: |
+            sleep 15
+            curl -f http://localhost:3000 > /dev/null 2>&1 && \
+              echo "✅ App OK" || echo "⚠️ App non accessible"

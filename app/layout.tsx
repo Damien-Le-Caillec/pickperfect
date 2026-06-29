@@ -33,20 +33,16 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                var t = localStorage.getItem('pp_theme');
-                if (!t) {
-                  t = window.matchMedia('(prefers-color-scheme: dark)').matches
-                    ? 'dark' : 'light';
-                }
-                document.documentElement.setAttribute('data-theme', t);
-              } catch(e) {}
-            `,
-          }}
-        />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              const saved = localStorage.getItem('pickperfect-theme');
+              // Dark par défaut si aucune préférence sauvegardée
+              const theme = saved || 'dark';
+              document.documentElement.setAttribute('data-theme', theme);
+            })();
+          `
+        }} />
       </head>
       <body>{children}</body>
     </html>

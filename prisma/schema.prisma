@@ -38,6 +38,14 @@ model User {
   itemsCreated    Item[]       @relation("ItemCreatedBy")
   comments Comment[]
   notifications Notification[]
+  friendshipsSent     Friendship[]  @relation("FriendshipSender")
+  friendshipsReceived Friendship[]  @relation("FriendshipReceiver")
+  itemActivities      ItemActivity[]
+  birthdays            Birthday[]
+  secretSantasGiving   SecretSantaAssign[] @relation("SecretSantaGiver")
+  secretSantasReceiving SecretSantaAssign[] @relation("SecretSantaReceiver")
+  contributions        Contribution[]
+  weeklyChallenges WeeklyChallenge[]
 
   @@map("users")
 }
@@ -87,12 +95,14 @@ model List {
   collaborative Boolean  @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  surpriseMode Boolean @default(false)
 
   items        Item[]
   groups       ListGroup[]
   activityLogs ActivityLog[]
   members      ListMember[]
   inviteTokens InviteToken[]
+  views ListView[]
 
   @@index([userId])
   @@map("lists")
@@ -124,6 +134,8 @@ model Item {
 
   reservations Reservation[]
   comments Comment[]
+  activities ItemActivity[]
+  contributions Contribution[]
 
   @@index([listId])
   @@map("items")
@@ -160,6 +172,89 @@ model Notification {
   @@map("notifications")
 }
 
+model Friendship {
+  id         String           @id @default(cuid())
+  senderId   String
+  sender     User             @relation("FriendshipSender",   fields: [senderId],   references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User             @relation("FriendshipReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     String @default("PENDING")
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId])
+  @@map("friendships")
+}
+
+model ItemActivity {
+  id        String   @id @default(cuid())
+  itemId    String
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String   // "ADDED" | "EDITED" | "RESERVED" | "UNRESERVED"
+  details   String?  // JSON des champs modifiés
+  createdAt DateTime @default(now())
+
+  @@index([itemId])
+  @@map("item_activities")
+}
+
+model Birthday {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String    // Prénom de la personne
+  date         DateTime  // Mois + jour (l'année est ignorée pour le calcul)
+  relatedListId String?  // Lien optionnel vers une liste
+  remindDays   Int       @default(7) // Rappel X jours avant
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+  @@map("birthdays")
+}
+
+model SecretSanta {
+  id          String              @id @default(cuid())
+  groupId     String              @unique
+  group       Group               @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  year        Int
+  budget      Float?
+  status      String @default("PENDING")
+  assignments SecretSantaAssign[]
+  createdAt   DateTime            @default(now())
+
+  @@map("secret_santas")
+}
+
+model SecretSantaAssign {
+  id            String      @id @default(cuid())
+  secretSantaId String
+  secretSanta   SecretSanta @relation(fields: [secretSantaId], references: [id], onDelete: Cascade)
+  giverId       String
+  giver         User        @relation("SecretSantaGiver",    fields: [giverId],    references: [id])
+  receiverId    String
+  receiver      User        @relation("SecretSantaReceiver", fields: [receiverId], references: [id])
+
+  @@unique([secretSantaId, giverId])
+  @@map("secret_santa_assignments")
+}
+
+model Contribution {
+  id          String   @id @default(cuid())
+  itemId      String
+  item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Float
+  message     String?
+  createdAt   DateTime @default(now())
+
+  @@unique([itemId, userId])
+  @@map("contributions")
+}
+
 // ============ RÉSERVATIONS ============
 model Reservation {
   id         String    @id @default(cuid())
@@ -191,6 +286,7 @@ model Group {
   members UserGroup[]
   lists   ListGroup[]
   inviteTokens GroupInviteToken[]
+  secretSanta SecretSanta?
   
   @@map("groups")
 }
@@ -289,6 +385,8 @@ model Points {
   lastDailyLogin  DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  currentStreak Int      @default(0)
+  longestStreak Int      @default(0) 
 
   @@map("user_points")
 }
@@ -334,3 +432,31 @@ model ActivityLog {
   @@map("activity_logs")
 }
 
+model ListView {
+  id        String   @id @default(cuid())
+  listId    String
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  userId    String?  // null si non connecté (on compte quand même)
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@unique([listId, userId])   // un seul enregistrement par user+liste
+  @@index([listId])
+  @@map("list_views")
+}
+
+model WeeklyChallenge {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart   DateTime // Lundi de la semaine
+  challengeId String   // "reserve_3" | "share_list" | "add_5_items" | etc.
+  progress    Int      @default(0)
+  target      Int
+  completed   Boolean  @default(false)
+  rewardPts   Int
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, weekStart, challengeId])
+  @@map("weekly_challenges")
+}

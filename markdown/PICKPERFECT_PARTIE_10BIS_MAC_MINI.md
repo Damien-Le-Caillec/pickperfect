@@ -6,7 +6,7 @@
 ## 🧠 RÉFLEXION
 
 > On garde macOS — pas besoin d'effacer quoi que ce soit.
-> Docker Desktop tourne sur Mac, Cloudflare Tunnel s'installe en une commande,
+> Docker Desktop tourne sur Mac, Cloudflare donne une URL gratuite en 2 commandes,
 > et GitHub Actions fait le lien : chaque `git push` sur `main` déclenche
 > automatiquement le déploiement sur le Mac Mini.
 > Tu codes sur ton PC Windows, tu pushs, et 2 minutes plus tard
@@ -19,7 +19,7 @@
 1. Préparer le Mac Mini (SSH, veille, Docker)
 2. Préparer le projet (Dockerfile, docker-compose, PostgreSQL)
 3. Premier déploiement manuel
-4. Cloudflare Tunnel (HTTPS sans ouvrir de port)
+4. URL gratuite avec Cloudflare (sans domaine)
 5. GitHub Actions (auto-déploiement à chaque push)
 6. Sauvegardes automatiques
 7. Checklist finale
@@ -362,13 +362,14 @@ POSTGRES_DB=pickperfect
 
 SESSION_SECRET=REMPLACE_PAR_CHAINE_ALEATOIRE_LONGUE
 
-NEXT_PUBLIC_APP_URL=https://pickperfect.ton-domaine.com
+# On mettra la vraie URL après l'Étape 4
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 SMTP_HOST=smtp-relay.brevo.com
 SMTP_PORT=587
 SMTP_USER=ton-email-brevo@exemple.com
 SMTP_PASS=ta-cle-smtp-brevo
-SMTP_FROM=PickPerfect <noreply@ton-domaine.com>
+SMTP_FROM=PickPerfect <noreply@pickperfect.com>
 
 CRON_SECRET=UNE_TROISIEME_CHAINE_ALEATOIRE
 ```
@@ -385,6 +386,11 @@ Lancement initial :
 ```bash
 cd ~/pickperfect
 docker compose --env-file .env.production up -d --build
+```
+
+Migrations :
+
+```bash
 docker compose --env-file .env.production exec app npx prisma migrate deploy
 ```
 
@@ -397,73 +403,72 @@ curl http://localhost:3000
 
 ---
 
-## ÉTAPE 4 — CLOUDFLARE TUNNEL
+## ÉTAPE 4 — URL GRATUITE AVEC CLOUDFLARE (sans domaine)
 
-### 4.1 Acheter un domaine
-
-**Cloudflare Registrar** (le moins cher) : https://www.cloudflare.com/products/registrar
-
-### 4.2 Ajouter le domaine sur Cloudflare
-
-1. https://dash.cloudflare.com → "Add a site" → plan **Free**
-2. Cloudflare te donne 2 nameservers → les renseigner chez ton registrar
-3. Attendre 5-30 minutes
-
-### 4.3 Installer et configurer
+### 4.1 Installer cloudflared
 
 ```bash
 brew install cloudflared
-cloudflared tunnel login
-cloudflared tunnel create pickperfect
 ```
 
-Note l'UUID du tunnel affiché.
+### 4.2 Lancer le tunnel
 
 ```bash
-nano ~/.cloudflared/config.yml
+cloudflared tunnel --url http://localhost:3000
 ```
 
-```yaml
-tunnel: TON-UUID-ICI
-credentials-file: /Users/damien/.cloudflared/TON-UUID-ICI.json
+Cloudflare affiche une URL du type :
 
-ingress:
-  - hostname: pickperfect.ton-domaine.com
-    service: http://localhost:3000
-  - service: http_status:404
 ```
+https://banana-pizza-random.trycloudflare.com
+```
+
+**C'est ton lien.** Copie-le.
+
+### 4.3 Installer en service permanent
+
+Pour que le tunnel redémarre automatiquement avec le Mac :
 
 ```bash
-cloudflared tunnel route dns pickperfect pickperfect.ton-domaine.com
-sudo cloudflared service install
+sudo cloudflared service install --url http://localhost:3000
 ```
 
-Vérification :
+### 4.4 Mettre à jour l'URL dans .env.production
 
 ```bash
-sudo launchctl list | grep cloudflared
-# ✅ Une ligne avec un PID
-```
-
-Mettre à jour l'URL et redémarrer :
-
-```bash
-# Édite .env.production et mets la vraie URL
 nano ~/pickperfect/.env.production
-# NEXT_PUBLIC_APP_URL=https://pickperfect.ton-domaine.com
+```
 
+```bash
+NEXT_PUBLIC_APP_URL=https://banana-pizza-random.trycloudflare.com
+```
+
+Redémarre l'app pour prendre en compte la nouvelle URL :
+
+```bash
 cd ~/pickperfect
 docker compose --env-file .env.production up -d --build
 ```
 
-Test depuis ton téléphone en 4G → ✅ cadenas HTTPS valide.
+Test depuis ton téléphone en 4G :
+
+```
+https://banana-pizza-random.trycloudflare.com
+```
+
+✅ L'app s'affiche avec le cadenas HTTPS.
+
+> **Note :** L'URL peut changer si tu réinstalles le service.
+> Dans ce cas, remets à jour `NEXT_PUBLIC_APP_URL` et relance le build.
+> Quand tu voudras une URL fixe permanente, tu achètes un domaine (~10€/an)
+> et tu reconfigures le tunnel avec ton domaine — même principe, juste une étape de plus.
 
 ---
 
 ## ÉTAPE 5 — TAILSCALE + GITHUB ACTIONS
 
 Tailscale crée un réseau privé entre le Mac Mini et GitHub Actions.
-C'est ce qui permet à GitHub d'atteindre ton Mac qui est derrière ta box internet.
+C'est ce qui permet à GitHub d'atteindre ton Mac derrière ta box internet.
 
 ### 5.1 Installer Tailscale sur le Mac Mini
 
@@ -475,7 +480,7 @@ sudo tailscale up
 
 Connecte-toi sur https://login.tailscale.com (avec Google ou GitHub).
 
-Note l'IP Tailscale du Mac Mini — du type `100.x.x.x` — visible dans le dashboard.
+Note l'**IP Tailscale** du Mac Mini — du type `100.x.x.x` — visible dans le dashboard.
 
 ### 5.2 Créer un client OAuth Tailscale
 
@@ -503,8 +508,7 @@ Note l'IP Tailscale du Mac Mini — du type `100.x.x.x` — visible dans le dash
 ## ÉTAPE 6 — TESTER L'AUTO-DÉPLOIEMENT
 
 ```powershell
-# Sur ton PC Windows
-# Fais un petit changement (par ex dans app/page.tsx)
+# Sur ton PC Windows — fais un petit changement
 git add .
 git commit -m "Test auto-déploiement"
 git push
@@ -514,7 +518,7 @@ Va sur **github.com/Damien-Le-Caillec/pickperfect → Actions**
 
 ✅ Workflow "Deploy to Mac Mini" se lance automatiquement
 ✅ Statut vert après ~2 minutes
-✅ Le changement est visible sur ton domaine
+✅ Le changement est visible sur ton URL Cloudflare
 
 ---
 
@@ -525,13 +529,18 @@ Va sur **github.com/Damien-Le-Caillec/pickperfect → Actions**
 crontab -e
 ```
 
+Ajoute ces deux lignes :
+
 ```
 # Sauvegarde quotidienne à 3h
 0 3 * * * /bin/bash /Users/damien/pickperfect/backup.sh >> /Users/damien/backups/backup.log 2>&1
 
 # Rappels anniversaires à 8h
-0 8 * * * curl -s "https://pickperfect.ton-domaine.com/api/cron/birthdays?token=TON_CRON_SECRET" > /dev/null
+0 8 * * * curl -s "https://banana-pizza-random.trycloudflare.com/api/cron/birthdays?token=TON_CRON_SECRET" > /dev/null
 ```
+
+> Remplace `banana-pizza-random.trycloudflare.com` par ta vraie URL Cloudflare
+> et `TON_CRON_SECRET` par la valeur de `CRON_SECRET` dans ton `.env.production`
 
 Test manuel :
 
@@ -546,7 +555,7 @@ ls -la ~/backups
 ## ✅ CHECKLIST FINALE
 
 ```
-□ https://pickperfect.ton-domaine.com accessible depuis un téléphone en 4G
+□ L'URL Cloudflare est accessible depuis ton téléphone en 4G
 □ Cadenas HTTPS valide
 □ Docker Desktop démarre automatiquement
 □ Mac Mini ne se met jamais en veille
@@ -600,5 +609,5 @@ git push
 
 ---
 
-*PickPerfect — Déploiement Mac Mini avec auto-deploy terminé*
-*🎄 Lien à envoyer : https://pickperfect.ton-domaine.com/register*
+*PickPerfect — Déploiement Mac Mini terminé*
+*🎄 Lien à envoyer aux betatesteurs : https://banana-pizza-random.trycloudflare.com/register*
