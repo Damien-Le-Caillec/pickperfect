@@ -84,7 +84,7 @@ export default function SharedListsPage() {
               Où j'ai un rôle ({asMember.length})
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1rem', marginBottom: '2rem' }}>
-              {asMembers.map(l => <Card key={l.id} list={l} badge={l.role === 'EDITOR' ? 'Éditeur' : 'Spectateur'} />)}
+              {asMember.map((l: SharedList) => <Card key={l.id} list={l} badge={l.role === 'EDITOR' ? 'Éditeur' : 'Spectateur'} />)}
             </div>
           </>
         )}
@@ -101,7 +101,7 @@ export default function SharedListsPage() {
           </>
         )}
 
-        {asMembers.length === 0 && fromFriends.length === 0 && (
+        {asMember.length === 0 && fromFriends.length === 0 && (
           <div className="empty">
             <div className="empty-icon"><i className="fas fa-share-alt" /></div>
             <h3>Aucune liste partagée</h3>

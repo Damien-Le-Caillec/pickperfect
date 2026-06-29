@@ -13,6 +13,8 @@ interface Points {
   level:           number
   experience:      number
   nextLevelExp:    number
+  currentStreak?: number
+  longestStreak?: number
 }
 
 interface Badge {

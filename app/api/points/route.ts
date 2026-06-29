@@ -19,7 +19,19 @@ export async function GET() {
     const userId = session.userId
 
     const [points, badges, transactions] = await Promise.all([
-        prisma.points.findUnique({ where: { userId } }),
+        prisma.points.findUnique({
+            where:  { userId },
+            select: {
+                totalPoints:     true,
+                availablePoints: true,
+                spentPoints:     true,
+                level:           true,
+                experience:      true,
+                nextLevelExp:    true,
+                currentStreak:   true,
+                longestStreak:   true,
+            },
+        }),
         prisma.userBadge.findMany({
             where: { userId },
             orderBy: { earnedAt: 'desc' },

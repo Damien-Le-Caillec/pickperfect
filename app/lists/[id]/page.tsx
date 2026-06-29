@@ -44,6 +44,7 @@ interface ListData {
   viewCount:     number
   shareToken?:   string
   collaborative: boolean
+  surpriseMode:  boolean
   userId:        string
   user:          { id: string; name: string | null; email: string }
   items:         Item[]
