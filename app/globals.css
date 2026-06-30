@@ -55,11 +55,12 @@
   --warning:       #FBBF24;
 
   /* ---- Ombres ---- */
-  --shadow-xs:     0 1px 2px rgba(0,0,0,0.4);
-  --shadow-sm:     0 2px 8px rgba(0,0,0,0.5);
-  --shadow-md:     0 4px 16px rgba(0,0,0,0.6);
-  --shadow-lg:     0 8px 32px rgba(0,0,0,0.7);
-  --shadow-xl:     0 16px 48px rgba(0,0,0,0.8);
+  --shadow-xs:     0 2px 6px rgba(0,0,0,0.3);
+  --shadow-sm:     0 4px 14px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.25);
+  --shadow-md:     0 8px 24px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.3);
+  --shadow-lg:     0 16px 40px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.35);
+  --shadow-xl:     0 24px 64px rgba(0,0,0,0.6), 0 8px 20px rgba(0,0,0,0.4);
+  --shadow-float:  0 12px 32px rgba(0,0,0,0.45);
   --shadow-glow:   0 0 20px rgba(167,139,250,0.15);
   --shadow-glow-peach: 0 0 20px rgba(255,123,107,0.2);
 
@@ -80,12 +81,12 @@
   --s-12:  48px;
 
   /* ---- Rayons ---- */
-  --r-sm:   6px;
-  --r-md:   10px;
-  --r-lg:   14px;
-  --r-xl:   18px;
-  --r-2xl:  24px;
-  --r-3xl:  32px;
+  --r-sm:   8px;
+  --r-md:   12px;
+  --r-lg:   16px;
+  --r-xl:   22px;
+  --r-2xl:  28px;
+  --r-3xl:  36px;
   --r-full: 9999px;
 
   /* ---- Transitions ---- */
@@ -228,16 +229,16 @@ h1, h2, h3, h4 {
   border:        1px solid var(--border-1);
   border-radius: var(--r-2xl);
   padding:       var(--s-6);
-  box-shadow:    var(--shadow-sm);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition:    all 0.2s var(--ease);
+  box-shadow:    var(--shadow-float);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition:    transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out), border-color 0.25s var(--ease);
 }
 
 .card:hover {
   border-color: var(--border-2);
-  box-shadow:   var(--shadow-md);
-  transform:    translateY(-2px);
+  box-shadow:   var(--shadow-lg);
+  transform:    translateY(-4px) scale(1.005);
 }
 
 .card-glow {
@@ -549,6 +550,92 @@ select {
   line-height: 1.6;
 }
 
+
+.corner-badge {
+  position:        absolute;
+  top:              var(--s-3);
+  right:            var(--s-3);
+  width:            32px;
+  height:           32px;
+  border-radius:    50%;
+  display:          flex;
+  align-items:      center;
+  justify-content:  center;
+  background:       rgba(13,13,18,0.65);
+  backdrop-filter:  blur(8px);
+  border:           1px solid rgba(255,255,255,0.12);
+  box-shadow:       0 2px 8px rgba(0,0,0,0.3);
+  font-size:        0.85rem;
+  color:            white;
+  z-index:          2;
+}
+
+.corner-badge-success {
+  background: var(--mint);
+  border-color: transparent;
+}
+
+.corner-badge-text {
+  position:         absolute;
+  top:               var(--s-3);
+  left:              var(--s-3);
+  padding:           4px 12px;
+  border-radius:     var(--r-full);
+  background:        rgba(13,13,18,0.7);
+  backdrop-filter:   blur(8px);
+  border:            1px solid rgba(255,255,255,0.12);
+  font-size:         0.7rem;
+  font-weight:       700;
+  color:             white;
+  z-index:           2;
+}
+
+.search-pill {
+  display:           flex;
+  align-items:       center;
+  gap:               var(--s-3);
+  background:        var(--surface-2);
+  border:            1.5px solid var(--border-1);
+  border-radius:     var(--r-full);
+  padding:           var(--s-2) var(--s-3) var(--s-2) var(--s-5);
+  transition:        all 0.2s var(--ease);
+  backdrop-filter:   blur(12px);
+}
+
+.search-pill:focus-within {
+  border-color: var(--lavender);
+  box-shadow:   0 0 0 4px var(--lavender-light);
+  background:   var(--surface-3);
+}
+
+.search-pill input {
+  flex:          1;
+  background:    none;
+  border:        none;
+  padding:       6px 0;
+  font-size:     0.9rem;
+}
+.search-pill input:focus {
+  box-shadow: none;
+  background: none;
+}
+
+.search-pill-btn {
+  width:           36px;
+  height:          36px;
+  border-radius:   50%;
+  background:      linear-gradient(135deg, var(--peach), var(--lavender));
+  border:          none;
+  color:           white;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  cursor:          pointer;
+  flex-shrink:     0;
+  transition:      transform 0.15s var(--ease);
+}
+.search-pill-btn:hover { transform: scale(1.08); }
+
 /* ============================================================
    ANIMATIONS
    ============================================================ */
@@ -599,3 +686,4 @@ select {
   background: var(--lavender-light);
   color:      var(--lavender);
 }
+

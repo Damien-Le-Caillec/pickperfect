@@ -135,8 +135,20 @@
 /* ---- Grille ---- */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--s-5);
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--s-6);
+  grid-auto-flow: dense;
+}
+
+/* Une carte sur 5 légèrement plus grande pour casser la grille uniforme */
+.grid > *:nth-child(5n+1) {
+  grid-column: span 2;
+}
+
+@media (max-width: 900px) {
+  .grid > *:nth-child(5n+1) {
+    grid-column: span 1;
+  }
 }
 
 /* ---- Carte ---- */

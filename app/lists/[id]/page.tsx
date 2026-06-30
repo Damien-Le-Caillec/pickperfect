@@ -707,9 +707,9 @@ export default function ListDetailPage() {
         ================================================ */}
         {total > 0 && (
           <div style={{ display: 'flex', gap: 'var(--s-3)', marginBottom: 'var(--s-5)', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-              <i className="fas fa-search" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)', fontSize: '0.8rem', pointerEvents: 'none' }} />
-              <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un cadeau…" style={{ paddingLeft: 36, height: 38 }} />
+            <div className="search-pill" style={{ flex: 1, minWidth: 200 }}>
+              <i className="fas fa-search" style={{ color: 'var(--text-3)', fontSize: '0.8rem' }} />
+              <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un cadeau…" />
             </div>
 
             <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)} style={{ height: 38, width: 'auto', cursor: 'pointer' }}>
@@ -799,9 +799,14 @@ export default function ListDetailPage() {
                         : <div className={styles.itemImgPlaceholder}><i className="fas fa-image" /></div>
                       }
                       {item.reserved && (
-                        <div className={styles.reservedOverlay}>
-                          <i className="fas fa-check-circle" />
-                          {myReservation ? 'Réservé par vous' : `Réservé${item.reservedBy?.name ? ` par ${item.reservedBy.name}` : ''}`}
+                        <div className="corner-badge corner-badge-success" title={myReservation ? 'Réservé par vous' : `Réservé${item.reservedBy?.name ? ` par ${item.reservedBy.name}` : ''}`}>
+                          <i className="fas fa-check" />
+                        </div>
+                      )}
+                      {item.priority === 3 && !item.reserved && (
+                        <div className="corner-badge-text">
+                          <i className="fas fa-fire" style={{ marginRight: 4 }} />
+                          Indispensable
                         </div>
                       )}
                     </div>

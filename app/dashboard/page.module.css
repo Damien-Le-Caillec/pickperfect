@@ -255,3 +255,18 @@
   .xpCard  { flex-direction: column; text-align: center; }
   .wrapper { padding: var(--s-5) var(--s-4); }
 }
+
+.statCard {
+  background:      var(--surface);
+  border:          1px solid var(--border-1);
+  border-radius:   var(--r-2xl);
+  padding:         var(--s-6);
+  box-shadow:      var(--shadow-float);
+  backdrop-filter: blur(16px);
+  transition:      transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
+}
+
+.statCard:hover {
+  transform:  translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
