@@ -55,6 +55,7 @@ model User {
   secretSantasReceiving SecretSantaAssign[] @relation("SecretSantaReceiver")
   contributions        Contribution[]
   weeklyChallenges WeeklyChallenge[]
+  feedbacks Feedback[]
 
   @@map("users")
 }
@@ -494,4 +495,17 @@ model WeeklyChallenge {
 
   @@unique([userId, weekStart, challengeId])
   @@map("weekly_challenges")
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type      String   @default("OTHER") // "BUG" | "IDEA" | "OTHER"
+  message   String
+  page      String?
+  status    String   @default("NEW")  // "NEW" | "READ" | "DONE"
+  createdAt DateTime @default(now())
+
+  @@map("feedbacks")
 }

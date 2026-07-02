@@ -46,6 +46,9 @@ export default function AdminDashboard() {
                         <Link href="/admin/users" className="btn btn-secondary">
                             <i className="fas fa-users" /> Utilisateurs
                         </Link>
+                        <Link href="/admin/feedbacks" className="btn btn-secondary">
+                            <i className="fas fa-comment-alt" /> Feedbacks betatesteurs
+                        </Link>
                         <Link href="/admin/logs" className="btn btn-secondary">
                             <i className="fas fa-history" /> Logs
                         </Link>

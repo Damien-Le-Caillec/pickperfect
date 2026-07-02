@@ -292,3 +292,36 @@
   .tabs      { width: 100%; }
   .tab       { flex: 1; justify-content: center; }
 }
+
+@media (max-width: 640px) {
+  .wrapper { padding: var(--s-4) !important; }
+
+  .hero {
+    flex-direction: column !important;
+    text-align:     center !important;
+    padding:        var(--s-6) var(--s-4) !important;
+  }
+
+  .heroStats {
+    justify-content: center !important;
+    flex-wrap:       wrap !important;
+    gap:             var(--s-4) !important;
+  }
+
+  .tabs {
+    overflow-x: auto !important;
+    flex-wrap:  nowrap !important;
+  }
+
+  .tab {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    font-size:   0.78rem !important;
+  }
+
+  .rewardsGrid,
+  .badgesGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap:                   var(--s-3) !important;
+  }
+}

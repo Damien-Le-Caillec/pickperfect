@@ -368,3 +368,28 @@
   .stepsGrid::after { display: none; }
   .heroStats { gap: var(--s-6); }
 }
+
+@media (max-width: 640px) {
+  .hero {
+    padding:    var(--s-8) var(--s-4) !important;
+    min-height: auto !important;
+  }
+
+  .heroTitle {
+    font-size: 2rem !important;
+  }
+
+  .heroButtons {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .heroButtons .btn {
+    width:           100% !important;
+    justify-content: center !important;
+  }
+
+  .features {
+    grid-template-columns: 1fr !important;
+  }
+}

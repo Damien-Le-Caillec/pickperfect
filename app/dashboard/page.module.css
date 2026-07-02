@@ -270,3 +270,21 @@
   transform:  translateY(-4px);
   box-shadow: var(--shadow-lg);
 }
+
+@media (max-width: 640px) {
+  .wrapper { padding: var(--s-4) !important; }
+
+  .welcome {
+    flex-direction: column !important;
+    gap:            var(--s-3) !important;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap:                   var(--s-3) !important;
+  }
+
+  .listsGrid {
+    grid-template-columns: 1fr !important;
+  }
+}

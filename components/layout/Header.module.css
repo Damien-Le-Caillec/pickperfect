@@ -322,11 +322,16 @@
 }
 
 /* ---- Responsive ---- */
+
 @media (max-width: 768px) {
   .hamburger  { display: flex; }
   .mobileMenu { display: block; }
   .nav        { display: none; }
   .userName   { display: none; }
+  .inner      { padding: 0 var(--s-4); gap: var(--s-3); }
   .authButtons .btn:first-child { display: none; }
-  .inner      { padding: 0 var(--s-4); }
+}
+
+@media (max-width: 480px) {
+  .logoText { display: none; }
 }

@@ -1078,7 +1078,7 @@ export default function ListDetailPage() {
       {reserveModal && (
         <>
           <div onClick={() => setReserveModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, backdropFilter: 'blur(4px)' }} />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: 'var(--surface)', border: '1px solid var(--border-1)', borderRadius: 'var(--r-2xl)', padding: 'var(--s-8)', width: '100%', maxWidth: 480, boxShadow: 'var(--shadow-xl)', animation: 'fadeUp 0.2s var(--ease-out)' }}>
+          <div data-modal="" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: 'var(--surface)', border: '1px solid var(--border-1)', borderRadius: 'var(--r-2xl)', padding: 'var(--s-8)', width: '100%', maxWidth: 480, boxShadow: 'var(--shadow-xl)', animation: 'fadeUp 0.2s var(--ease-out)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--s-5)' }}>
               <h2 style={{ fontWeight: 800, fontSize: '1.1rem' }}>
                 <i className="fas fa-hand-pointer" style={{ marginRight: 8, color: 'var(--peach)' }} />
@@ -1130,7 +1130,7 @@ export default function ListDetailPage() {
       {editItem && (
         <>
           <div onClick={() => setEditItem(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, backdropFilter: 'blur(4px)' }} />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: 'var(--surface)', border: '1px solid var(--border-1)', borderRadius: 'var(--r-2xl)', padding: 'var(--s-8)', width: '100%', maxWidth: 540, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-xl)', animation: 'fadeUp 0.2s var(--ease-out)' }}>
+          <div data-modal="" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: 'var(--surface)', border: '1px solid var(--border-1)', borderRadius: 'var(--r-2xl)', padding: 'var(--s-8)', width: '100%', maxWidth: 540, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-xl)', animation: 'fadeUp 0.2s var(--ease-out)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--s-6)' }}>
               <h2 style={{ fontWeight: 800, fontSize: '1.1rem' }}>
                 <i className="fas fa-pen" style={{ marginRight: 8, color: 'var(--peach)' }} /> Modifier le cadeau
@@ -1204,7 +1204,7 @@ export default function ListDetailPage() {
       {editListOpen && (
         <>
           <div onClick={() => setEditListOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, backdropFilter: 'blur(4px)' }} />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: 'var(--surface)', border: '1px solid var(--border-1)', borderRadius: 'var(--r-2xl)', padding: 'var(--s-8)', width: '100%', maxWidth: 580, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-xl)', animation: 'fadeUp 0.2s var(--ease-out)' }}>
+          <div data-modal="" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: 'var(--surface)', border: '1px solid var(--border-1)', borderRadius: 'var(--r-2xl)', padding: 'var(--s-8)', width: '100%', maxWidth: 580, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-xl)', animation: 'fadeUp 0.2s var(--ease-out)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--s-6)' }}>
               <h2 style={{ fontWeight: 800, fontSize: '1.1rem' }}>
                 <i className="fas fa-pen" style={{ marginRight: 8, color: 'var(--peach)' }} /> Modifier la liste
@@ -1285,7 +1285,7 @@ export default function ListDetailPage() {
       {listCommentsOpen && (
         <>
           <div onClick={() => setListCommentsOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, backdropFilter: 'blur(4px)' }} />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: 'var(--surface)', border: '1px solid var(--border-1)', borderRadius: 'var(--r-2xl)', padding: 'var(--s-6)', width: '100%', maxWidth: 520, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-xl)' }}>
+          <div data-modal="" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: 'var(--surface)', border: '1px solid var(--border-1)', borderRadius: 'var(--r-2xl)', padding: 'var(--s-6)', width: '100%', maxWidth: 520, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-xl)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--s-4)' }}>
               <h2 style={{ fontWeight: 800, fontSize: '1.05rem' }}>
                 <i className="fas fa-comments" style={{ marginRight: 8, color: 'var(--peach)' }} />

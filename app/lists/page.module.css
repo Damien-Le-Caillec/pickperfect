@@ -117,5 +117,21 @@
 }
 
 @media (max-width: 640px) {
-  .grid { grid-template-columns: 1fr; }
+  .wrapper { padding: var(--s-4) !important; }
+
+  .header {
+    flex-direction: column !important;
+    align-items:    flex-start !important;
+    gap:            var(--s-3) !important;
+  }
+
+  .header .btn {
+    width:           100% !important;
+    justify-content: center !important;
+  }
+
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap:                   var(--s-4) !important;
+  }
 }

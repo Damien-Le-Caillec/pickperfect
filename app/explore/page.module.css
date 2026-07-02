@@ -567,3 +567,27 @@
 @media (max-width: 500px) {
   .heroStats { gap: var(--s-5); }
 }
+
+@media (max-width: 640px) {
+  .wrapper { padding: var(--s-4) !important; }
+
+  .filters {
+    flex-direction: column !important;
+    gap:            var(--s-2) !important;
+  }
+
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Désactiver la carte grande sur mobile */
+  .grid > *:nth-child(5n+1) {
+    grid-column: span 1 !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .grid > *:nth-child(5n+1) {
+    grid-column: span 1 !important;
+  }
+}

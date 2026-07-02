@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import './globals.css'
+import FeedbackButton from "@/components/layout/FeedbackButton";
 
 export const metadata: Metadata = {
   title: { default: 'PickPerfect', template: '%s | PickPerfect' },
@@ -45,6 +46,7 @@ export default function RootLayout({
         }} />
       </head>
       <body>{children}</body>
+      <FeedbackButton />
     </html>
   )
 }

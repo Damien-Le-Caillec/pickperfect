@@ -33,3 +33,17 @@
 .cardName { font-size: 1.05rem; font-weight: 700; margin-bottom: var(--s-2); }
 .cardDesc { font-size: 0.85rem; color: var(--text-3); margin-bottom: var(--s-4); line-height: 1.5; }
 .cardMeta { display: flex; gap: var(--s-4); font-size: 0.78rem; color: var(--text-3); }
+
+@media (max-width: 640px) {
+  .wrapper { padding: var(--s-4) !important; }
+
+  .header {
+    flex-direction: column !important;
+    align-items:    flex-start !important;
+    gap:            var(--s-3) !important;
+  }
+
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+}
