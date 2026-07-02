@@ -24,6 +24,13 @@ model User {
   updatedAt      DateTime  @updatedAt
   emailNotifications Boolean @default(true)
   unsubscribeToken String? @unique
+  bio          String?
+  city         String?
+  avatarUrl    String?
+  accentColor  String  @default("peach")
+  bannerColor  String  @default("gradient-peach-lavender")
+  birthDate    DateTime?
+  profileViews Int     @default(0)
 
   sessions        Session[]
   lists           List[]

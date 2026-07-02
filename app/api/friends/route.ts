@@ -3,8 +3,6 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth/sqlite-auth";
 import { CreateNotification } from "@/lib/notifications";
-import { includes, success } from "zod";
-import { error } from "console";
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -40,11 +38,18 @@ export async function GET() {
         }),
     ])
 
-    const friendList = friends.map(f => ({
-        id: f.id,
-        friend: f.senderId === session.userId ? f.receiver : f.senderId,
-        since: f.updatedAt,
-    }))
+    const friendList = friends.map(f => {
+        const friend = f.senderId === session.userId ? f.receiver : f.sender
+        return {
+            id:     f.id,
+            friend: {
+            id:    friend.id,
+            name:  friend.name,
+            email: friend.email,
+            },
+            since: f.updatedAt,
+        }
+    })
 
     return NextResponse.json({ friends: friendList, pending, requests })
 }

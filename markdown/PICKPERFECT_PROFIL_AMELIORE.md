@@ -1,3 +1,206 @@
+# 🎁 PICKPERFECT — PROFIL AMÉLIORÉ
+## Photo · Bio · Stats · Personnalisation · Barre de complétion
+
+---
+
+## 🧠 RÉFLEXION
+
+> Un profil vide c'est un utilisateur anonyme.
+> Un profil avec une photo, une bio et des badges c'est une personne.
+> La barre de complétion crée un objectif immédiat dès l'inscription :
+> "Votre profil est complété à 40%" → l'utilisateur veut monter à 100%.
+> C'est le même principe que LinkedIn.
+
+---
+
+## 📋 CE QU'ON FAIT
+
+1. Schéma — nouveaux champs profil
+2. API profil mise à jour
+3. Page profil privée (mon profil)
+4. Page profil public (profil d'un ami)
+5. Barre de complétion
+
+---
+
+## ÉTAPE 1 — SCHÉMA
+
+Dans `prisma/schema.prisma`, dans le modèle `User` ajoute :
+
+```prisma
+model User {
+  // ...champs existants...
+  bio          String?
+  city         String?
+  avatarUrl    String?
+  accentColor  String  @default("peach")
+  bannerColor  String  @default("gradient-peach-lavender")
+  birthDate    DateTime?
+  profileViews Int     @default(0)
+}
+```
+
+```powershell
+$env:DATABASE_URL="file:./dev.db"
+npx prisma migrate dev --name add_profile_fields
+```
+
+---
+
+## ÉTAPE 2 — API PROFIL MISE À JOUR
+
+### 2.1 API mon profil — GET enrichi
+
+Dans `app/api/profile/route.ts`, enrichis le GET pour retourner toutes les nouvelles infos :
+
+**Cherche :**
+```typescript
+const user = await prisma.user.findUnique({
+  where:  { id: session.userId },
+  select: { id: true, name: true, email: true, role: true, createdAt: true },
+})
+```
+
+**Remplace par :**
+```typescript
+const [user, points, badgeCount, listCount, reservationCount, friendCount] = await Promise.all([
+  prisma.user.findUnique({
+    where:  { id: session.userId },
+    select: {
+      id:          true,
+      name:        true,
+      email:       true,
+      role:        true,
+      createdAt:   true,
+      bio:         true,
+      city:        true,
+      avatarUrl:   true,
+      accentColor: true,
+      bannerColor: true,
+      birthDate:   true,
+    },
+  }),
+  prisma.points.findUnique({
+    where:  { userId: session.userId },
+    select: { currentStreak: true, availablePoints: true },
+  }),
+  prisma.userBadge.count({ where: { userId: session.userId } }),
+  prisma.list.count({ where: { userId: session.userId } }),
+  prisma.reservation.count({ where: { userId: session.userId } }),
+  prisma.friendship.count({
+    where: {
+      OR: [
+        { senderId:   session.userId, status: 'ACCEPTED' },
+        { receiverId: session.userId, status: 'ACCEPTED' },
+      ],
+    },
+  }),
+])
+
+if (!user) return NextResponse.json({ error: 'Introuvable' }, { status: 404 })
+
+return NextResponse.json({
+  ...user,
+  stats: {
+    lists:        listCount,
+    reservations: reservationCount,
+    friends:      friendCount,
+    badges:       badgeCount,
+    streak:       points?.currentStreak ?? 0,
+    points:       points?.availablePoints ?? 0,
+  },
+})
+```
+
+### 2.2 API PATCH — accepter les nouveaux champs
+
+Dans `app/api/profile/route.ts`, dans la fonction PATCH :
+
+**Cherche :**
+```typescript
+const updated = await prisma.user.update({
+  where: { id: session.userId },
+  data:  { name: body.name },
+})
+```
+
+**Remplace par :**
+```typescript
+const updated = await prisma.user.update({
+  where: { id: session.userId },
+  data:  {
+    name:        body.name        ?? undefined,
+    bio:         body.bio         ?? undefined,
+    city:        body.city        ?? undefined,
+    accentColor: body.accentColor ?? undefined,
+    bannerColor: body.bannerColor ?? undefined,
+    birthDate:   body.birthDate   ? new Date(body.birthDate) : undefined,
+  },
+})
+```
+
+### 2.3 API upload photo de profil
+
+```powershell
+mkdir app\api\profile\avatar
+code app/api/profile/avatar/route.ts
+```
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server'
+import { cookies }                   from 'next/headers'
+import { prisma }                    from '@/lib/prisma'
+import { validateSession }           from '@/lib/auth/sqlite-auth'
+import { writeFile, mkdir }          from 'fs/promises'
+import { join }                      from 'path'
+import sharp                         from 'sharp'
+import crypto                        from 'crypto'
+
+async function getSession() {
+  const cookieStore = await cookies()
+  const id          = cookieStore.get('auth_session')?.value
+  if (!id) return null
+  return validateSession(id)
+}
+
+export async function POST(request: NextRequest) {
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+  const formData = await request.formData()
+  const file     = formData.get('file') as File
+  if (!file) return NextResponse.json({ error: 'Fichier requis' }, { status: 400 })
+
+  const buffer   = Buffer.from(await file.arrayBuffer())
+  const filename = `${crypto.randomBytes(12).toString('hex')}.webp`
+  const dir      = join(process.cwd(), 'public', 'uploads', 'avatars')
+
+  await mkdir(dir, { recursive: true })
+
+  // Carré 200x200 centré
+  await sharp(buffer)
+    .resize(200, 200, { fit: 'cover', position: 'centre' })
+    .webp({ quality: 90 })
+    .toFile(join(dir, filename))
+
+  const avatarUrl = `/uploads/avatars/${filename}`
+
+  await prisma.user.update({
+    where: { id: session.userId },
+    data:  { avatarUrl },
+  })
+
+  return NextResponse.json({ avatarUrl })
+}
+```
+
+---
+
+## ÉTAPE 3 — PAGE PROFIL PRIVÉE
+
+Remplace tout `app/profile/page.tsx` par :
+
+```tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -11,18 +214,11 @@ const ACCENT_COLORS = [
 ]
 
 const BANNER_COLORS = [
-  { id: 'sunset',     label: 'Coucher de soleil', value: 'linear-gradient(135deg,#FF7B6B,#FF9A5C,#A78BFA)' },
-  { id: 'aurora',     label: 'Aurora',            value: 'linear-gradient(135deg,#34D399,#059669,#A78BFA)' },
-  { id: 'fire',       label: 'Feu',               value: 'linear-gradient(135deg,#FBBF24,#F97316,#EF4444)' },
-  { id: 'night',      label: 'Nuit étoilée',      value: 'linear-gradient(135deg,#0F0C29,#302B63,#24243E)' },
-  { id: 'ocean',      label: 'Océan',             value: 'linear-gradient(135deg,#0EA5E9,#0284C7,#34D399)' },
-  { id: 'rose',       label: 'Rose bonbon',       value: 'linear-gradient(135deg,#FDA4AF,#FB7185,#A78BFA)' },
-  { id: 'forest',     label: 'Forêt',             value: 'linear-gradient(135deg,#166534,#15803D,#4ADE80)' },
-  { id: 'candy',      label: 'Candy',             value: 'linear-gradient(135deg,#F0ABFC,#E879F9,#818CF8)' },
-  { id: 'gold',       label: 'Or',                value: 'linear-gradient(135deg,#FBBF24,#D97706,#92400E)' },
-  { id: 'ice',        label: 'Glace',             value: 'linear-gradient(135deg,#BAE6FD,#7DD3FC,#A5B4FC)' },
-  { id: 'lava',       label: 'Lave',              value: 'linear-gradient(135deg,#7C3AED,#DB2777,#F97316)' },
-  { id: 'midnight',   label: 'Minuit',            value: 'linear-gradient(135deg,#1E1B4B,#4C1D95,#2563EB)' },
+  { id: 'gradient-peach-lavender', label: 'Coucher de soleil', value: 'linear-gradient(135deg,#FF7B6B,#A78BFA)' },
+  { id: 'gradient-mint-lavender',  label: 'Aurora',            value: 'linear-gradient(135deg,#34D399,#A78BFA)' },
+  { id: 'gradient-gold-peach',     label: 'Feu',               value: 'linear-gradient(135deg,#FBBF24,#FF7B6B)' },
+  { id: 'gradient-dark',           label: 'Nuit',              value: 'linear-gradient(135deg,#1C1917,#3B3240)' },
+  { id: 'gradient-ocean',          label: 'Océan',             value: 'linear-gradient(135deg,#0EA5E9,#34D399)' },
 ]
 
 function getBannerValue(id: string) {
@@ -139,9 +335,9 @@ export default function ProfilePage() {
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '2rem 1.5rem' }}>
 
         {/* ---- Bannière + Avatar ---- */}
-        <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
+        <div style={{ borderRadius: 'var(--r-2xl)', overflow: 'hidden', marginBottom: '1.5rem', position: 'relative' }}>
           {/* Bannière */}
-          <div style={{ height: 140, background: getBannerValue(form.bannerColor), borderRadius: 'var(--r-2xl)' }} />
+          <div style={{ height: 140, background: getBannerValue(form.bannerColor) }} />
 
           {/* Avatar */}
           <div style={{ position: 'absolute', bottom: -40, left: 24 }}>
@@ -377,3 +573,210 @@ export default function ProfilePage() {
     </PageLayout>
   )
 }
+```
+
+---
+
+## ÉTAPE 4 — PAGE PROFIL PUBLIC
+
+Remplace `app/profile/[id]/page.tsx` par :
+
+```tsx
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
+import PageLayout from '@/components/layout/PageLayout'
+
+const BANNER_COLORS: Record<string, string> = {
+  'gradient-peach-lavender': 'linear-gradient(135deg,#FF7B6B,#A78BFA)',
+  'gradient-mint-lavender':  'linear-gradient(135deg,#34D399,#A78BFA)',
+  'gradient-gold-peach':     'linear-gradient(135deg,#FBBF24,#FF7B6B)',
+  'gradient-dark':           'linear-gradient(135deg,#1C1917,#3B3240)',
+  'gradient-ocean':          'linear-gradient(135deg,#0EA5E9,#34D399)',
+}
+
+const ACCENT_COLORS: Record<string, string> = {
+  peach:    '#FF7B6B',
+  lavender: '#A78BFA',
+  mint:     '#34D399',
+  gold:     '#FBBF24',
+}
+
+export default function PublicProfilePage() {
+  const params  = useParams()
+  const userId  = params.id as string
+  const [data,    setData]    = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`/api/profile/public/${userId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { setData(d); setLoading(false) })
+  }, [userId])
+
+  if (loading) return <PageLayout><div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}><span className="spinner" /></div></PageLayout>
+  if (!data)   return <PageLayout><div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-3)' }}>Profil introuvable</div></PageLayout>
+
+  const accent   = ACCENT_COLORS[data.accentColor]  ?? '#FF7B6B'
+  const banner   = BANNER_COLORS[data.bannerColor]  ?? BANNER_COLORS['gradient-peach-lavender']
+  const initials = data.name?.[0]?.toUpperCase() ?? data.email?.[0]?.toUpperCase() ?? '?'
+
+  return (
+    <PageLayout>
+      <div style={{ maxWidth: 700, margin: '0 auto', padding: '2rem 1.5rem' }}>
+
+        {/* Bannière + Avatar */}
+        <div style={{ borderRadius: 'var(--r-2xl)', overflow: 'hidden', marginBottom: '1.5rem', position: 'relative' }}>
+          <div style={{ height: 120, background: banner }} />
+          <div style={{ position: 'absolute', bottom: -36, left: 20 }}>
+            {data.avatarUrl ? (
+              <img src={data.avatarUrl} alt="Avatar" style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--bg)' }} />
+            ) : (
+              <div style={{ width: 72, height: 72, borderRadius: '50%', background: `linear-gradient(135deg, ${accent}, var(--lavender))`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: 'white', border: '3px solid var(--bg)' }}>
+                {initials}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Infos */}
+        <div style={{ paddingTop: '2rem', marginBottom: '1.5rem' }}>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 800 }}>{data.name ?? 'Utilisateur'}</h1>
+          {data.bio  && <p style={{ color: 'var(--text-2)', marginTop: 4 }}>{data.bio}</p>}
+          {data.city && <p style={{ color: 'var(--text-3)', fontSize: '0.85rem', marginTop: 2 }}><i className="fas fa-map-marker-alt" style={{ marginRight: 4 }} />{data.city}</p>}
+
+          <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+            {[
+              { label: 'Listes',       value: data.stats?.lists        ?? 0 },
+              { label: 'Réservations', value: data.stats?.reservations ?? 0 },
+              { label: 'Badges',       value: data.stats?.badges       ?? 0 },
+              { label: 'Streak',       value: `🔥 ${data.stats?.streak ?? 0}j` },
+            ].map(s => (
+              <div key={s.label} style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 900, color: accent }}>{s.value}</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Listes publiques */}
+        <h2 style={{ fontWeight: 700, marginBottom: '1rem', fontSize: '1rem' }}>
+          <i className="fas fa-gift" style={{ marginRight: 8, color: accent }} />
+          Listes publiques ({data.lists?.length ?? 0})
+        </h2>
+
+        {data.lists?.length === 0 ? (
+          <p style={{ color: 'var(--text-3)', fontSize: '0.875rem' }}>Aucune liste publique.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {data.lists?.map((list: any) => (
+              <Link key={list.id} href={`/lists/${list.id}`} style={{ textDecoration: 'none' }}>
+                <div className="card" style={{ cursor: 'pointer' }}>
+                  <div style={{ fontWeight: 700, marginBottom: 4 }}>{list.title}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>
+                    {list._count.items} cadeau{list._count.items !== 1 ? 'x' : ''}
+                    {list.eventDate && ` · ${new Date(list.eventDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </PageLayout>
+  )
+}
+```
+
+---
+
+## ÉTAPE 5 — API PROFIL PUBLIC ENRICHIE
+
+Remplace `app/api/profile/public/[id]/route.ts` :
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma }                    from '@/lib/prisma'
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+
+  const [user, stats] = await Promise.all([
+    prisma.user.findUnique({
+      where:  { id },
+      select: {
+        id:          true,
+        name:        true,
+        bio:         true,
+        city:        true,
+        avatarUrl:   true,
+        accentColor: true,
+        bannerColor: true,
+        createdAt:   true,
+        lists: {
+          where:   { privacy: 'PUBLIC' },
+          select:  { id: true, title: true, eventDate: true, _count: { select: { items: true } } },
+          orderBy: { updatedAt: 'desc' },
+        },
+      },
+    }),
+    Promise.all([
+      prisma.list.count({ where: { userId: id } }),
+      prisma.reservation.count({ where: { userId: id } }),
+      prisma.userBadge.count({ where: { userId: id } }),
+      prisma.points.findUnique({ where: { userId: id }, select: { currentStreak: true } }),
+    ]),
+  ])
+
+  if (!user) return NextResponse.json({ error: 'Introuvable' }, { status: 404 })
+
+  return NextResponse.json({
+    ...user,
+    stats: {
+      lists:        stats[0],
+      reservations: stats[1],
+      badges:       stats[2],
+      streak:       stats[3]?.currentStreak ?? 0,
+    },
+  })
+}
+```
+
+---
+
+## ✅ TESTS
+
+1. Va sur `/profile` → ✅ bannière colorée + avatar + stats
+2. Change la couleur d'accent → ✅ se reflète sur le profil
+3. Change la bannière → ✅ aperçu immédiat
+4. Upload une photo → ✅ remplace les initiales
+5. Barre de complétion → ✅ monte au fur et à mesure
+6. Clique "Voir" sur un ami → ✅ profil public avec sa bannière et ses couleurs
+
+---
+
+## 📁 FICHIERS CRÉÉS / MODIFIÉS
+
+```
+pickperfect/
+├── prisma/schema.prisma                    ← + bio, city, avatarUrl, accentColor, bannerColor, birthDate
+├── app/
+│   ├── profile/
+│   │   ├── page.tsx                        ← Entièrement réécrit
+│   │   └── [id]/page.tsx                  ← Profil public avec couleurs
+│   └── api/
+│       ├── profile/
+│       │   ├── route.ts                    ← + stats enrichies
+│       │   └── avatar/route.ts             ← Nouveau — upload photo
+│       └── profile/public/[id]/route.ts   ← Mis à jour avec stats
+```
+
+---
+
+*PickPerfect — Profil amélioré terminé* ✨

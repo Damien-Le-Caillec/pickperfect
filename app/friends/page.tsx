@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import PageLayout from '@/components/layout/PageLayout'
+import Link from 'next/link'
 
 interface Friend { id: string; friend: { id: string; name: string | null; email: string }; since: string }
 interface Request { id: string; sender: { id: string; name: string | null; email: string } }
@@ -18,6 +19,7 @@ export default function FriendsPage() {
     fetch('/api/friends').then(r => r.json()).then(d => {
       setFriends(d.friends ?? [])
       setRequests(d.requests ?? [])
+      console.log('friends data:', d)
     })
   }
 
@@ -50,8 +52,8 @@ export default function FriendsPage() {
     load()
   }
 
-  const initials = (u: { name: string | null; email: string }) =>
-    u.name?.[0]?.toUpperCase() ?? u.email[0].toUpperCase()
+  const initials = (u: { name: string | null; email?: string }) =>
+    u.name?.[0]?.toUpperCase() ?? u.email?.[0].toUpperCase() ?? '?'
 
   return (
     <PageLayout>
@@ -113,9 +115,12 @@ export default function FriendsPage() {
               <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 0', borderBottom: '1px solid var(--border-1)' }}>
                 <div className="avatar avatar-sm">{initials(f.friend)}</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600 }}>{f.friend.name ?? f.friend.email}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>{f.friend.email}</div>
+                  <div style={{ fontWeight: 600 }}>{f.friend.name ?? f.friend.email ?? 'Utilisateur'}</div>
+                  {f.friend.email && <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>{f.friend.email}</div>}
                 </div>
+                <Link href={`/profile/${f.friend.id}`} className="btn btn-ghost btn-sm">
+                  <i className="fas fa-eye" /> Voir
+                </Link>
                 <button className="btn btn-ghost btn-icon btn-sm" onClick={() => remove(f.id)} title="Supprimer">
                   <i className="fas fa-user-minus" />
                 </button>
