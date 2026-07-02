@@ -23,11 +23,14 @@ COPY --from=builder /app/public                               ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static     ./.next/static
 COPY --from=builder /app/prisma                               ./prisma
-COPY --from=builder /app/node_modules/.prisma                 ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma                 ./node_modules/@prisma
+COPY --from=builder /app/node_modules/.prisma        ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma        ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma         ./node_modules/prisma
 
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+COPY --from=builder /app/prisma ./prisma
+RUN  chmod +x /app/node_modules/.bin/prisma 2>/dev/null || true
+CMD ["sh", "-c", "npx --yes prisma@5.22.0 migrate deploy --schema=./prisma/schema.prisma 2>/dev/null || true && node server.js"]
