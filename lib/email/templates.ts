@@ -1,6 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-// Style commun
 const styles = `
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: #FAFAF9;
@@ -37,9 +36,11 @@ const footerStyle = `
     border-top: 1px solid #E7E5E4;
 `
 
-// Email de bienvenue
-export function welcomeEmail(name: string) {
+export function welcomeEmail(name: string, unsubscribeToken?: string) {
     const firstName = name?.split(' ')[0] || 'vous'
+    const unsubLink = unsubscribeToken
+        ? `<p><a href="${BASE_URL}/unsubscribe?token=${unsubscribeToken}" style="color: #A8A29E;">Se désabonner des emails</a></p>`
+        : ''
 
     return {
         subject: '🎁 Bienvenue sur PickPerfect !',
@@ -53,20 +54,18 @@ export function welcomeEmail(name: string) {
                 Votre compte PickPerfect est prêt. Vous pouvez dès maintenant
                 créer vos premières listes de cadeaux et les partager avec vos proches.
             </p>
-
             <a href="${BASE_URL}/lists/new" style="${btnStyle}">
                 Créer ma première liste
             </a>
-
             <p style="color: #57534E; font-size: 14px; line-height: 1.6;">
                 <strong>Ce que vous pouvez faire :</strong><br>
                 • Ajouter des cadeaux depuis Amazon, FNAC, Darty en un clic<br>
                 • Inviter vos proches à voir et réserver vos cadeaux<br>
                 • Gagner des points à chaque action
             </p>
-
             <div style="${footerStyle}">
                 <p>PickPerfect · <a href="${BASE_URL}/legal/cgu" style="color: #A8A29E;">CGU</a> · <a href="${BASE_URL}/legal/privacy" style="color: #A8A29E;">Confidentialité</a></p>
+                ${unsubLink}
             </div>
             </div>
         </div>
@@ -74,16 +73,19 @@ export function welcomeEmail(name: string) {
     }
 }
 
-// ---- Email de réservation (pour le propriétaire de la liste) ----
 export function reservationEmail(
   ownerName: string,
   reserverName: string,
   itemTitle: string,
   listTitle: string,
   listId: string,
-  anonymous: boolean
+  anonymous: boolean,
+  unsubscribeToken?: string
 ) {
   const who = anonymous ? 'Quelqu\'un' : reserverName
+  const unsubLink = unsubscribeToken
+      ? `<p><a href="${BASE_URL}/unsubscribe?token=${unsubscribeToken}" style="color: #A8A29E;">Se désabonner des emails</a></p>`
+      : ''
 
   return {
     subject: `🎁 ${who} a réservé un cadeau sur votre liste`,
@@ -97,14 +99,12 @@ export function reservationEmail(
             <strong>${who}</strong> a réservé <strong>${itemTitle}</strong>
             sur votre liste <strong>${listTitle}</strong>.
           </p>
-
           <a href="${BASE_URL}/lists/${listId}" style="${btnStyle}">
             Voir ma liste
           </a>
-
           <div style="${footerStyle}">
-            <p>Vous recevez cet email car vous êtes propriétaire d'une liste PickPerfect.</p>
             <p>PickPerfect · <a href="${BASE_URL}/legal/privacy" style="color: #A8A29E;">Confidentialité</a></p>
+            ${unsubLink}
           </div>
         </div>
       </div>
@@ -112,7 +112,6 @@ export function reservationEmail(
   }
 }
 
-// ---- Email de reset de mot de passe ----
 export function resetPasswordEmail(token: string) {
   const resetUrl = `${BASE_URL}/reset-password/${token}`
 
@@ -131,22 +130,18 @@ export function resetPasswordEmail(token: string) {
           <p style="color: #A8A29E; font-size: 14px; margin: 0 0 24px;">
             Ce lien expire dans <strong>1 heure</strong>.
           </p>
-
           <a href="${resetUrl}" style="${btnStyle}">
             Réinitialiser mon mot de passe
           </a>
-
           <p style="color: #A8A29E; font-size: 13px; line-height: 1.6;">
             Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.
             Votre mot de passe reste inchangé.
           </p>
-
           <div style="background: #F5F4F1; border-radius: 8px; padding: 12px 16px; margin-top: 16px;">
             <p style="color: #78716C; font-size: 12px; margin: 0; word-break: break-all;">
               ${resetUrl}
             </p>
           </div>
-
           <div style="${footerStyle}">
             <p>PickPerfect · <a href="${BASE_URL}/legal/privacy" style="color: #A8A29E;">Confidentialité</a></p>
           </div>

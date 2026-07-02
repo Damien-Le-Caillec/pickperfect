@@ -62,6 +62,9 @@ export default function ProfilePage() {
   const [sessionsLoading, setSessionsLoading] = useState(true)
   const [revoking, setRevoking] = useState<string | null>(null)
 
+  const [emailNotifications, setEmailNotifications] = useState(true)
+
+
   // ---- Chargement ----
   useEffect(() => {
     fetch('/api/profile')
@@ -83,6 +86,10 @@ export default function ProfilePage() {
     fetch('/api/profile/sessions')
       .then(r => r.json())
       .then(d => { setSessions(d); setSessionsLoading(false) })
+
+    fetch('/api/profile/email-preferences').then(r => r.json()).then(d => {
+      setEmailNotifications(d.emailNotifications ?? true)
+    })
   }, [])
 
   // ---- Sauvegarder les infos ----
@@ -430,6 +437,35 @@ export default function ProfilePage() {
               })
             )}
           </div>
+        </div>
+
+        {/* Préférences emails */}
+        <div className="card" style={{ marginBottom: 'var(--s-6)' }}>
+          <h2 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 'var(--s-5)' }}>
+            <i className="fas fa-envelope" style={{ marginRight: 8, color: 'var(--peach)' }} />
+            Préférences emails
+          </h2>
+          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Emails de rappel</div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>
+                Anniversaires, rappels d'événements
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={emailNotifications}
+              onChange={async e => {
+                const val = e.target.checked
+                setEmailNotifications(val)
+                await fetch('/api/profile/email-preferences', {
+                  method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                  body:   JSON.stringify({ emailNotifications: val }),
+                })
+              }}
+              style={{ width: 'auto', accentColor: 'var(--peach)', cursor: 'pointer', transform: 'scale(1.3)' }}
+            />
+          </label>
         </div>
 
         {/* ==================================================

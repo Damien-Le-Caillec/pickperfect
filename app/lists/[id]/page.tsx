@@ -5,6 +5,7 @@ import { useParams, useRouter }              from 'next/navigation'
 import Link                                  from 'next/link'
 import PageLayout                            from '@/components/layout/PageLayout'
 import styles                                from './page.module.css'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 // ============================================================
 // TYPES
@@ -51,6 +52,13 @@ interface ListData {
   members:       Member[]
 }
 
+interface CommentData {
+  id: string
+  content: string
+  createdAt: string
+  user: { id: string; name: string | null }
+}
+
 // ============================================================
 // COMPOSANT
 // ============================================================
@@ -84,6 +92,11 @@ export default function ListDetailPage() {
   })
   const [addLoading, setAddLoading] = useState(false)
 
+  const [scrapedImages, setScrapedImages] = useState<string[]>([])
+
+  const [uploadingImg, setUploadingImg] = useState(false)
+
+
   // ---- Filtres ----
   const [search,       setSearch]       = useState('')
   const [sortBy,       setSortBy]       = useState<'priority' | 'name' | 'price_asc' | 'price_desc'>('priority')
@@ -111,6 +124,11 @@ export default function ListDetailPage() {
   const [editListLoading, setEditListLoading] = useState(false)
   const [editListError,   setEditListError]   = useState('')
 
+  const [listCommentsOpen, setListCommentsOpen] = useState(false)
+  const [listComments, setListComments] = useState<CommentData[]>([])
+  const [listCommentText, setListCommentText] = useState('')
+  const [listCommentsLoad, setListCommentsLoad] = useState(false)
+  const [listCommentSend, setListCommentSend] = useState(false)
   // ============================================================
   // CHARGEMENT
   // ============================================================
@@ -172,6 +190,7 @@ export default function ListDetailPage() {
         imageUrl:    data.imageUrl          || '',
         description: data.description       || '',
       }))
+      setScrapedImages(data.images ?? [])
     }
   }
 
@@ -357,6 +376,42 @@ export default function ListDetailPage() {
     await loadList()
   }
 
+  const openListComments = async () => {
+    setListCommentsOpen(true)
+    setListCommentsLoad(true)
+    const res = await fetch(`/api/lists/${listId}/comments`)
+    const data = await res.json()
+    setListComments(data)
+    setListCommentsLoad(false)
+  }
+
+  const sendListComment = async () => {
+    if (!listCommentText.trim()) return
+    setListCommentSend(true)
+    const res = await fetch(`/api/lists/${listId}/comments`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: listCommentText }),
+    })
+    setListCommentSend(false)
+    if (res.ok) {
+      const c = await res.json()
+      setListComments(prev => [...prev, c])
+      setListCommentText('')
+    }
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingImg(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res  = await fetch('/api/upload', { method: 'POST', body: fd })
+    const data = await res.json()
+    setUploadingImg(false)
+    if (res.ok) setNewItem(p => ({ ...p, imageUrl: data.imageUrl }))
+  }
+
   // ============================================================
   // HELPERS
   // ============================================================
@@ -495,6 +550,15 @@ export default function ListDetailPage() {
                   >
                     <i className="fas fa-qrcode" /> QR
                   </a>
+                  <button className='btn btn-secondary btn-sm' onClick={openListComments}>
+                    <i className='fas fa-comments' />
+                    Commentaires
+                    {listComments.length > 0 && (
+                      <span className='badge badge-lavender' style={{ marginLeft: 4 }}>
+                        {listComments.length}
+                      </span>
+                    )}
+                  </button>
                   <button className="btn btn-secondary btn-sm" onClick={handleShare}>
                     <i className="fas fa-share-alt" /> Partager
                   </button>
@@ -564,6 +628,66 @@ export default function ListDetailPage() {
                     placeholder="99.90" step="0.01" min="0"
                   />
                 </div>
+              </div>
+
+              {/* Image */}
+              <div className="form-group" style={{ marginBottom: 'var(--s-5)' }}>
+                <label className="label">
+                  Image <span className="form-hint">(optionnel)</span>
+                </label>
+
+                {/* Upload fichier */}
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--s-2)', padding: 'var(--s-3)', border: '1.5px dashed var(--border-2)', borderRadius: 'var(--r-md)', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-2)', marginBottom: 'var(--s-2)' }}>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} disabled={uploadingImg} />
+                  {uploadingImg ? <><span className="spinner" /> Envoi…</> : <><i className="fas fa-upload" /> Uploader une photo</>}
+                </label>
+
+                {/* URL manuelle */}
+                <input
+                  type="url"
+                  value={newItem.imageUrl}
+                  onChange={e => setNewItem(p => ({ ...p, imageUrl: e.target.value }))}
+                  placeholder="Ou coller une URL d'image…"
+                />
+
+                {/* Aperçu + supprimer */}
+                {newItem.imageUrl && (
+                  <div style={{ marginTop: 'var(--s-3)', position: 'relative', display: 'inline-block' }}>
+                    <img
+                      src={newItem.imageUrl} alt="Aperçu"
+                      style={{ height: 80, borderRadius: 'var(--r-md)', objectFit: 'cover', display: 'block' }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setNewItem(p => ({ ...p, imageUrl: '' })); setScrapedImages([]) }}
+                      style={{ position: 'absolute', top: -8, right: -8, width: 22, height: 22, borderRadius: '50%', background: 'var(--error)', color: 'white', border: 'none', cursor: 'pointer', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <i className="fas fa-times" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Sélecteur si plusieurs images scrapées */}
+                {scrapedImages.length > 1 && (
+                  <div style={{ marginTop: 'var(--s-3)' }}>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginBottom: 'var(--s-2)' }}>
+                      <i className="fas fa-images" style={{ marginRight: 6 }} />
+                      {scrapedImages.length} photos disponibles — choisissez :
+                    </p>
+                    <div style={{ display: 'flex', gap: 'var(--s-2)', flexWrap: 'wrap' }}>
+                      {scrapedImages.map((img, i) => (
+                        <div
+                          key={i}
+                          onClick={() => setNewItem(p => ({ ...p, imageUrl: img }))}
+                          style={{ width: 70, height: 70, borderRadius: 'var(--r-md)', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${newItem.imageUrl === img ? 'var(--peach)' : 'var(--border-1)'}`, flexShrink: 0, transition: 'border-color var(--ease)' }}
+                        >
+                          <img src={img} alt={`Option ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.target as HTMLImageElement).parentElement!.style.display = 'none' }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="form-group" style={{ marginBottom: 'var(--s-5)' }}>
@@ -712,12 +836,16 @@ export default function ListDetailPage() {
               <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un cadeau…" />
             </div>
 
-            <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)} style={{ height: 38, width: 'auto', cursor: 'pointer' }}>
-              <option value="priority">Priorité</option>
-              <option value="name">Nom A→Z</option>
-              <option value="price_asc">Prix croissant</option>
-              <option value="price_desc">Prix décroissant</option>
-            </select>
+            <CustomSelect
+              value={sortBy}
+              onChange={val => setSortBy(val as typeof sortBy)}
+              options={[
+                { value: 'priority',   label: 'Priorité' },
+                { value: 'name',       label: 'Nom A→Z' },
+                { value: 'price_asc',  label: 'Prix croissant' },
+                { value: 'price_desc', label: 'Prix décroissant' },
+              ]}
+            />
 
             <div style={{ display: 'flex', gap: 'var(--s-1)', background: 'var(--surface-2)', borderRadius: 'var(--r-md)', padding: 3 }}>
               {[
@@ -891,6 +1019,29 @@ export default function ListDetailPage() {
                           <button className="btn btn-danger btn-icon btn-sm" onClick={() => handleDelete(item.id)} title="Supprimer">
                             <i className="fas fa-trash" />
                           </button>
+                        )}
+
+                        {/* Bouton "Reçu !" - visible pour le proprio si l'item est réservé et pas encore confirmé */}
+                        {isOwner && item.reserved && !(item as any).receivedAt && (
+                          <button
+                            className='btn btn-ghost btn-sm'
+                            style={{ fontSize: '0.78rem', color: 'var(--mint)' }}
+                            onClick={async () => {
+                              const note = prompt('Un mot sur ce cadeau ? (optionnel)')
+                              await fetch(`/api/items/${item.id}/received`, {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ note }),
+                              })
+                              await loadList()
+                            }}
+                          >
+                            <i className='fas fa-box-open' /> Reçu !
+                          </button>
+                        )}
+                        {isOwner && (item as any).receivedAt && (
+                          <span className='badge badge-mint' style={{ fontSize: '0.72rem' }}>
+                            <i className='fas fa-heart' /> Reçu
+                          </span>
                         )}
                       </div>
                     </div>
@@ -1126,6 +1277,64 @@ export default function ListDetailPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </>
+      )}
+
+      {/* Modale commentaires de la liste */}
+      {listCommentsOpen && (
+        <>
+          <div onClick={() => setListCommentsOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, backdropFilter: 'blur(4px)' }} />
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 201, background: 'var(--surface)', border: '1px solid var(--border-1)', borderRadius: 'var(--r-2xl)', padding: 'var(--s-6)', width: '100%', maxWidth: 520, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-xl)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--s-4)' }}>
+              <h2 style={{ fontWeight: 800, fontSize: '1.05rem' }}>
+                <i className="fas fa-comments" style={{ marginRight: 8, color: 'var(--peach)' }} />
+                Commentaires de la liste
+              </h2>
+              <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setListCommentsOpen(false)}>
+                <i className="fas fa-times" />
+              </button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', marginBottom: 'var(--s-4)', minHeight: 120 }}>
+              {listCommentsLoad ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--s-6)' }}><span className="spinner" /></div>
+              ) : listComments.length === 0 ? (
+                <p style={{ color: 'var(--text-3)', fontSize: '0.875rem', textAlign: 'center', padding: 'var(--s-6) 0' }}>
+                  Aucun commentaire. Soyez le premier !
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
+                  {listComments.map(c => (
+                    <div key={c.id} style={{ display: 'flex', gap: 'var(--s-3)' }}>
+                      <div className="avatar avatar-xs">{c.user.name?.[0]?.toUpperCase() ?? '?'}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ background: 'var(--surface-2)', borderRadius: 'var(--r-lg)', padding: 'var(--s-3)' }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 2 }}>{c.user.name ?? 'Anonyme'}</div>
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-2)' }}>{c.content}</div>
+                        </div>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginTop: 4, display: 'block' }}>
+                          {new Date(c.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: 'var(--s-2)' }}>
+              <input
+                type="text" value={listCommentText}
+                onChange={e => setListCommentText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') sendListComment() }}
+                placeholder="Écrire un commentaire sur la liste…"
+                maxLength={500}
+              />
+              <button className="btn btn-primary btn-icon" onClick={sendListComment} disabled={listCommentSend || !listCommentText.trim()}>
+                {listCommentSend ? <span className="spinner" /> : <i className="fas fa-paper-plane" />}
+              </button>
+            </div>
           </div>
         </>
       )}

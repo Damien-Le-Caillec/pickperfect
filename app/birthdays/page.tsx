@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import PageLayout from '@/components/layout/PageLayout'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 interface Birthday {
   id: string; name: string; date: string
@@ -71,25 +72,30 @@ export default function BirthdaysPage() {
             <div className="form-row">
               <div className="form-group">
                 <label className="label">Mois</label>
-                <select value={form.month} onChange={e => setForm(p => ({ ...p, month: e.target.value }))}>
-                  {MONTHS.map((m, i) => (
-                    <option key={i} value={String(i + 1).padStart(2, '0')}>{m}</option>
-                  ))}
-                </select>
+                <CustomSelect
+                  value={form.month}
+                  onChange={val => setForm(p => ({ ...p, month: val }))}
+                  options={MONTHS.map((m, i) => ({
+                    value: String(i + 1).padStart(2, '0'),
+                    label: m,
+                  }))}
+                />
               </div>
               <div className="form-group">
                 <label className="label">Jour</label>
-                <select value={form.day} onChange={e => setForm(p => ({ ...p, day: e.target.value }))}>
-                  {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(d => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
+                <CustomSelect
+                  value={form.day}
+                  onChange={val => setForm(p => ({ ...p, day: val }))}
+                  options={Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(d => ({ value: d, label: d }))}
+                />
               </div>
               <div className="form-group">
                 <label className="label">Rappel (jours avant)</label>
-                <select value={form.remindDays} onChange={e => setForm(p => ({ ...p, remindDays: parseInt(e.target.value) }))}>
-                  {[0, 1, 3, 7, 14, 30].map(d => <option key={d} value={d}>{d === 0 ? 'Désactivé' : `${d} jours`}</option>)}
-                </select>
+                <CustomSelect
+                  value={form.day}
+                  onChange={val => setForm(p => ({ ...p, day: val }))}
+                  options={Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(d => ({ value: d, label: d }))}
+                />
               </div>
             </div>
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import Link from 'next/link'
 import PageLayout from "@/components/layout/PageLayout"
 import styles from './page.module.css'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 // TYPES
 
@@ -195,26 +196,18 @@ export default function ExplorePage() {
           </div>
 
           {/* Occasion */}
-          <select
-            className={styles.filterSelect}
+          <CustomSelect
             value={occasion}
-            onChange={e => setOccasion(e.target.value)}
-          >
-            {OCCASIONS.map(o => (
-              <option key={o} value={o}>{o}</option>
-            ))}
-          </select>
+            onChange={val => setOccasion(val)}
+            options={OCCASIONS.map(o => ({ value: o, label: o }))}
+          />
 
           {/* Budget */}
-          <select
-            className={styles.filterSelect}
+          <CustomSelect
             value={budget}
-            onChange={e => setBudget(e.target.value)}
-          >
-            {BUDGETS.map(b => (
-              <option key={b.value} value={b.value}>{b.label}</option>
-            ))}
-          </select>
+            onChange={val => setBudget(val)}
+            options={BUDGETS.map(b => ({ value: b.value, label: b.label }))}
+          />
 
           {/* Reset */}
           {hasFilters && (

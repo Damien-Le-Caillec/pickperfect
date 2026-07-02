@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import PageLayout from '@/components/layout/PageLayout'
 import styles from './page.module.css'
+import { OCCASIONS } from '@/lib/occasions'
 
 const PRIVACY_OPTIONS = [
   {
@@ -38,6 +39,8 @@ export default function NewListPage() {
     budget:      '',
   })
   const [loading, setLoading] = useState(false)
+  const [selectedOccasion, setSelectedOccasion] = useState('')
+  const [customOccasion, setCustomOccasion] = useState('')
   const [error,   setError]   = useState('')
 
   const set = (key: string, value: string) =>
@@ -148,7 +151,51 @@ export default function NewListPage() {
               ))}
             </div>
           </div>
-
+          {/* Occasion */}
+          <div className="form-group" style={{ marginBottom: 'var(--s-4)' }}>
+            <label className="label">
+              Occasion <span className="form-hint">(optionnel — pré-remplit le budget)</span>
+            </label>
+            <div style={{ display: 'flex', gap: 'var(--s-2)', flexWrap: 'wrap', marginBottom: 'var(--s-3)' }}>
+              {Object.entries(OCCASIONS).map(([key, occ]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => {
+                    if (selectedOccasion === key) {
+                      setSelectedOccasion('')
+                      set('budget', '')
+                    } else {
+                      setSelectedOccasion(key)
+                      setCustomOccasion('')
+                      set('budget', occ.avgPrice.toString())
+                    }
+                  }}
+                  className="btn btn-sm"
+                  style={{
+                    background:   selectedOccasion === key ? 'var(--peach)' : 'var(--surface-2)',
+                    color:        selectedOccasion === key ? 'white' : 'var(--text-1)',
+                    border:       `1px solid ${selectedOccasion === key ? 'var(--peach)' : 'var(--border-1)'}`,
+                    borderRadius: 'var(--r-full)',
+                    fontWeight:   selectedOccasion === key ? 700 : 400,
+                  }}
+                  disabled={loading}
+                >
+                  {occ.label} · {occ.avgPrice}€
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={customOccasion}
+              onChange={e => {
+                setCustomOccasion(e.target.value)
+                if (e.target.value) setSelectedOccasion('') // désélectionne le bouton
+              }}
+              placeholder="Ou saisir une occasion personnalisée…"
+              disabled={loading}
+            />
+          </div>
           {/* Date + Budget */}
           <div className="form-row">
             <div className="form-group">

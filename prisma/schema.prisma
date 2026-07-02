@@ -22,6 +22,8 @@ model User {
   loginCount     Int       @default(0)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  emailNotifications Boolean @default(true)
+  unsubscribeToken String? @unique
 
   sessions        Session[]
   lists           List[]
@@ -103,6 +105,7 @@ model List {
   members      ListMember[]
   inviteTokens InviteToken[]
   views ListView[]
+  comments Comment[] @relation("ListComments")
 
   @@index([userId])
   @@map("lists")
@@ -131,6 +134,8 @@ model Item {
   createdBy_item  User?     @relation("ItemCreatedBy", fields: [createdById], references: [id])
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  receivedAt DateTime?
+  receivedNote String?
 
   reservations Reservation[]
   comments Comment[]
@@ -143,12 +148,14 @@ model Item {
 
 // Commentaires
 model Comment {
-  id String @id @default(cuid())
-  itemId String
-  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  content String
+  id        String   @id @default(cuid())
+  itemId    String?
+  item      Item?    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  listId    String?
+  list      List?    @relation("ListComments", fields: [listId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
   createdAt DateTime @default(now())
 
   @@index([itemId])
@@ -224,6 +231,9 @@ model SecretSanta {
   status      String @default("PENDING")
   assignments SecretSantaAssign[]
   createdAt   DateTime            @default(now())
+  eventDate     DateTime?
+  launchedAt    DateTime?
+  lastReminderAt DateTime?
 
   @@map("secret_santas")
 }
@@ -236,9 +246,25 @@ model SecretSantaAssign {
   giver         User        @relation("SecretSantaGiver",    fields: [giverId],    references: [id])
   receiverId    String
   receiver      User        @relation("SecretSantaReceiver", fields: [receiverId], references: [id])
+  wishedFilledAt DateTime?
 
+  wishes SecretSantaWish[]
   @@unique([secretSantaId, giverId])
   @@map("secret_santa_assignments")
+}
+
+model SecretSantaWish {
+  id            String   @id @default(cuid())
+  assignId      String
+  assign        SecretSantaAssign @relation(fields: [assignId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  price         Float?
+  url           String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("secret_santa_wishes")
 }
 
 model Contribution {
@@ -267,6 +293,8 @@ model Reservation {
   status     String    @default("CONFIRMED")
   canceledAt DateTime?
   createdAt  DateTime  @default(now())
+  receivedAt DateTime?
+  receivedNote String?
 
   @@index([itemId])
   @@index([userId])
