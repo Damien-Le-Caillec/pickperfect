@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { validateSession } from "@/lib/auth/sqlite-auth";
-import { mkdir } from "fs/promises";
-import { join } from "path";
 import sharp from "sharp";
 import crypto from 'crypto'
 import { safeFetch } from "@/lib/security/safeFetch";
 import { rateLimitResponse } from "@/lib/security/rateLimit";
+import { saveImage } from '@/lib/storage'
 
 const MAX_BYTES = 10 * 1024 * 1024
 
@@ -60,19 +59,16 @@ export async function POST(request: NextRequest) {
         const hash = crypto.randomBytes(12).toString('hex')
         const filename = `${hash}.webp`
 
-        const uploadDir = join(process.cwd(), 'public', 'uploads', 'items')
-        await mkdir(uploadDir, { recursive: true })
-
-        await sharp(buffer)
+        const webp = await sharp(buffer)
             .resize(800, 800, {
                 fit: 'cover',
                 position: 'centre',
                 withoutEnlargement: true,
             })
             .webp({ quality: 85 })
-            .toFile(join(uploadDir, filename))
+            .toBuffer()
 
-        return NextResponse.json({ imageUrl: `/uploads/items/${filename}`})
+        return NextResponse.json({ imageUrl: await saveImage('items', filename, webp) })
     } catch (err) {
         console.error('Upload from URL error:', err)
         return NextResponse.json({ error: "Impossible de récupérer l'image" }, { status: 400 })

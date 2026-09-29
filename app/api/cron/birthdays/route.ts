@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma }                    from '@/lib/prisma'
 import { sendEmail }                 from '@/lib/email/mailer'
+import { isCronAuthorized } from '@/lib/security/cron'
 
 // Cette route est appelée par un cron job quotidien
 // Protégée par un secret token
 export async function GET(request: NextRequest) {
-  const token = request.nextUrl.searchParams.get('token')
-  if (token !== process.env.CRON_SECRET) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 

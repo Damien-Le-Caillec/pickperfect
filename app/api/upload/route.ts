@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { validateSession } from "@/lib/auth/sqlite-auth";
-import { mkdir } from "fs/promises";
-import { join } from "path";
 import sharp from "sharp";
 import crypto from 'crypto';
+import { saveImage } from '@/lib/storage'
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -14,7 +13,7 @@ async function getSession() {
 }
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
+const MAX_SIZE = 4 * 1024 * 1024 // 4 Mo (Vercel refuse les requêtes > 4,5 Mo)
 
 export async function POST(request: NextRequest) {
     const session = await getSession()
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
     if (file.size > MAX_SIZE) {
         return NextResponse.json(
-            { error: 'Fichier trop lourd. Maximum 5 Mo.' },
+            { error: 'Fichier trop lourd. Maximum 4 Mo.' },
             { status: 400 }
         )
     }
@@ -51,20 +50,16 @@ export async function POST(request: NextRequest) {
     const hash = crypto.randomBytes(12).toString('hex')
     const filename = `${hash}.webp`
 
-    // Dossier de destination
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'items')
-    await mkdir(uploadDir, { recursive: true })
-
     // Optimiser + convertir en WebP avec sharp
-    await sharp(buffer)
+    const webp = await sharp(buffer)
         .resize(800, 800, {
             fit: 'inside',
             withoutEnlargement: true,
         })
         .webp({ quality: 82 })
-        .toFile(join(uploadDir, filename))
+        .toBuffer()
 
-    const imageUrl = `/uploads/items/${filename}`
+    const imageUrl = await saveImage('items', filename, webp)
 
     return NextResponse.json({ imageUrl })
 }

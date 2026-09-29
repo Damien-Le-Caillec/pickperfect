@@ -8,12 +8,15 @@
     "start": "next start",
     "db:migrate": "dotenv -e .env -- npx prisma migrate dev",
     "db:studio": "dotenv -e .env -- npx prisma studio",
-    "db:reset": "dotenv -e .env -- npx prisma migrate reset"
+    "db:reset": "dotenv -e .env -- npx prisma migrate reset",
+    "postinstall": "prisma generate",
+    "vercel-build": "prisma generate && node scripts/migrate.mjs && next build"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.5.1",
     "@prisma/client": "^5.22.0",
     "@react-pdf/renderer": "^4.5.1",
+    "@vercel/blob": "^2.8.0",
     "bcrypt": "^6.0.0",
     "next": "16.2.6",
     "nodemailer": "^8.0.9",

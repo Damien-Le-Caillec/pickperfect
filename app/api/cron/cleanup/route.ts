@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isCronAuthorized } from '@/lib/security/cron'
 
 // Purge quotidienne (appelée par le conteneur cron) :
 // durées de conservation annoncées dans la politique de confidentialité
 export async function GET(request: NextRequest) {
-    const token = request.nextUrl.searchParams.get('token')
-    if (!process.env.CRON_SECRET || token !== process.env.CRON_SECRET) {
+    if (!isCronAuthorized(request)) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 

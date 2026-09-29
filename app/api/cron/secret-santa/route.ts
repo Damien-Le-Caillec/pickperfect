@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email/mailer";
 import { CreateNotification } from "@/lib/notifications";
+import { isCronAuthorized } from '@/lib/security/cron'
 
 export async function GET(request: NextRequest) {
-    const token = request.nextUrl.searchParams.get('token')
-    if (token !== process.env.CRON_SECRET) {
+    if (!isCronAuthorized(request)) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
