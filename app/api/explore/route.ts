@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         privacy: 'PUBLIC',
         items: { some: {} }, // au moins 1 item
         ...(search ? {
-            title: { contains: search },
+            title: { contains: search, mode: 'insensitive' as const },
         } : {}),
     }
 

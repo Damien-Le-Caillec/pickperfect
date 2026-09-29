@@ -37,8 +37,26 @@ export async function DELETE(request: NextRequest) {
     )
   }
 
-  // Supprimer l'utilisateur — Prisma cascade supprime tout
-  await prisma.user.delete({ where: { id: session.userId } })
+  const userId = session.userId
+
+  // Nettoyer ce que la cascade ne gère pas, puis supprimer l'utilisateur
+  await prisma.$transaction([
+    // Cadeaux réservés chez les autres : de nouveau disponibles
+    prisma.item.updateMany({
+      where: { reservedById: userId },
+      data:  { reserved: false, reservedById: null, reservedAt: null },
+    }),
+    // Tirages Secret Santa où il est donneur ou receveur (bloquent la suppression)
+    prisma.secretSantaAssign.deleteMany({
+      where: { OR: [{ giverId: userId }, { receiverId: userId }] },
+    }),
+    // Listes qu'il a ajoutées à des groupes (bloquent la suppression)
+    prisma.listGroup.deleteMany({ where: { addedById: userId } }),
+    // Groupes dont il est propriétaire (sinon ils resteraient sans propriétaire)
+    prisma.group.deleteMany({ where: { ownerId: userId } }),
+    // Le reste (listes, sessions, points, commentaires…) part en cascade
+    prisma.user.delete({ where: { id: userId } }),
+  ])
 
   // Supprimer le cookie
   const cookieStore = await cookies()

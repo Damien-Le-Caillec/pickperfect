@@ -3,32 +3,31 @@ const nextConfig = {
     // Nécessaire pour le deploiement Docker
     output: 'standalone',
 
+    // next/image n'est pas utilisé : aucun domaine distant autorisé
+    // (évite que /_next/image serve de proxy d'images ouvert)
     images: {
-        remotePatterns: [
-            // Amazon
-            { protocol: 'https', hostname: 'm.media-amazon.com'              },
-            { protocol: 'https', hostname: 'images-na.ssl-images-amazon.com' },
-            { protocol: 'https', hostname: 'images-eu.ssl-images-amazon.com' },
-            { protocol: 'https', hostname: '**.amazon.fr'                    },
-            // FNAC
-            { protocol: 'https', hostname: '**.fnac-static.com'              },
-            { protocol: 'https', hostname: 'static.fnac-static.com'          },
-            // Darty
-            { protocol: 'https', hostname: '**.darty.com'                    },
-            { protocol: 'https', hostname: 'medias.darty.com'                },
-            // Cdiscount
-            { protocol: 'https', hostname: '**.cdiscount.com'                },
-            // Etsy
-            { protocol: 'https', hostname: 'i.etsystatic.com'                },
-            // ManoMano
-            { protocol: 'https', hostname: '**.manomano.fr'                  },
-            // Générique — Open Graph de n'importe quel site
-            { protocol: 'https', hostname: '**'                              },
-        ],
+        remotePatterns: [],
+    },
+
+    // Fichiers uploadés après le build : servis par app/api/uploads
+    async rewrites() {
+        return [
+            { source: '/uploads/:path*', destination: '/api/uploads/:path*' },
+        ]
     },
 
     async headers() {
         return [
+            {
+                // En-têtes de sécurité pour tout le site
+                source: '/:path*',
+                headers: [
+                    { key: 'X-Content-Type-Options', value: 'nosniff' },
+                    { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+                    { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+                    { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+                ],
+            },
             {
                 source: '/api/:path*',
                 headers: [

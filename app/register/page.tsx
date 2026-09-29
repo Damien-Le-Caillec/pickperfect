@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useActionState } from "react"
+import { useState, useActionState, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { registerAction } from "@/lib/auth/actions"
 import styles from './page.module.css'
@@ -34,6 +35,12 @@ function passwordStrength(pwd: string): number {
 }
 
 const STRENGTH_LABELS = ['', 'Faible', 'Moyen', 'Bon', 'Fort']
+
+// Transmet ?redirect= (ex. lien d'invitation) à l'action d'inscription
+function RedirectField() {
+  const redirect = useSearchParams().get('redirect') ?? ''
+  return <input type="hidden" name="redirect" value={redirect} />
+}
 
 export default function RegisterPage() {
     const [showPwd, setShowPwd]     = useState(false)
@@ -73,6 +80,7 @@ export default function RegisterPage() {
           </p>
 
           <form className={styles.form} action={action}>
+            <Suspense fallback={null}><RedirectField /></Suspense>
             {state?.error && (
               <div className="alert alert-error">
                 <i className="fas fa-exclamation-circle" />

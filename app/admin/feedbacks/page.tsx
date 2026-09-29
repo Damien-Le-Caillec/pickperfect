@@ -18,6 +18,7 @@ const TYPE_CONFIG: Record<string, { label: string; badge: string; icon: string }
   BUG:   { label: 'Bug',   badge: 'badge-error',    icon: 'fa-bug'       },
   IDEA:  { label: 'Idée',  badge: 'badge-gold',     icon: 'fa-lightbulb' },
   OTHER: { label: 'Autre', badge: 'badge-neutral',  icon: 'fa-comment'   },
+  REWARD: { label: 'Récompense', badge: 'badge-mint', icon: 'fa-gift'     },
 }
 
 const STATUS_CONFIG: Record<string, { label: string; badge: string }> = {

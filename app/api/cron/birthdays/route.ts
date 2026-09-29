@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
     if (triggerDate.getMonth() + 1 === month && triggerDate.getDate() === day) {
       await sendEmail({
         to:      b.user.email,
+        notification: true,
         subject: `Anniversaire de ${b.name} dans ${b.remindDays} jour${b.remindDays !== 1 ? 's' : ''}`,
         html: `
           <div style="font-family:sans-serif;max-width:520px;margin:40px auto;background:white;border-radius:16px;padding:40px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">

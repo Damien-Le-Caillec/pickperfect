@@ -44,7 +44,9 @@ export default function MentionsLegalesPage() {
                 Hébergement
               </h2>
               <div className={styles.sectionBody}>
-                <p><strong>Type :</strong> Hébergement auto-géré (self-hosted)</p>
+                <p><strong>Hébergeur :</strong> [À compléter : nom de l'hébergeur]</p>
+                <p><strong>Adresse de l'hébergeur :</strong> [À compléter]</p>
+                <p><strong>Téléphone de l'hébergeur :</strong> [À compléter]</p>
                 <p><strong>Localisation des serveurs :</strong> France</p>
                 <p><strong>Contact :</strong> contact@pickperfect.com</p>
               </div>

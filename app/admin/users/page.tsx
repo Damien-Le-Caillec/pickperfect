@@ -30,7 +30,11 @@ export default function AdminUsersPage() {
     }
 
     useEffect(() => {
-        const t = setTimeout(load, search ? 300 : 0)
+        const t = setTimeout(() => {
+            fetch(`/api/admin/users?search=${encodeURIComponent(search)}`)
+                .then(r => r.json())
+                .then(d => { setUsers(d); setLoading(false) })
+        }, search ? 300 : 0)
         return () => clearTimeout(t)
     }, [search])
 

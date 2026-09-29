@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import { validateUser, createSession } from "@/lib/auth/sqlite-auth";
-import { checkRateLimit } from "@/lib/security/rateLimit";
+import { checkRateLimit, getClientIp } from "@/lib/security/rateLimit";
 import { processDailyLogin } from "@/lib/gamification/pointsService";
-import { error } from "console";
-import { success } from "zod";
 import { progressChallenge, ensureWeeklyChallenges } from '@/lib/gamification/challenges'
 
 export async function POST(request: NextRequest) {
     // Rate limiting
     const headerStore = await headers()
-    const ip =
-        headerStore.get('x-forwarded-for') ??
-        headerStore.get('x-real-ip') ??
-        'unknown'
+    const ip = getClientIp(headerStore)
 
     const limit = checkRateLimit(`login:${ip}`, {
         limit: 5,
@@ -67,10 +62,10 @@ export async function POST(request: NextRequest) {
     })
 
     // Points connexion quotidienne
-    await processDailyLogin(user.id).catch(() => {})
+    const dailyPoints = await processDailyLogin(user.id).catch(() => 0)
 
     await ensureWeeklyChallenges(user.id).catch(() => {})
-    await progressChallenge(user.id, 'login_5').catch(() => {})
+    if (dailyPoints > 0) await progressChallenge(user.id, 'login_5').catch(() => {})
 
     return NextResponse.json({ success: true })
 }

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { validateSession } from "@/lib/auth/sqlite-auth";
 import { addPoints } from '@/lib/gamification/pointsService'
+import { FREE_PRIVATE_LIST_LIMIT, hasReward } from '@/lib/points/rewards'
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -52,6 +53,13 @@ export async function POST(request: NextRequest) {
             { error: parsed.error.issues[0].message },
             { status: 400 }
         )
+    }
+
+    if (parsed.data.privacy === 'PRIVATE') {
+        const privateCount = await prisma.list.count({ where: { userId: session.userId, privacy: 'PRIVATE' } })
+        if (privateCount >= FREE_PRIVATE_LIST_LIMIT && !(await hasReward(session.userId, 'r4'))) {
+            return NextResponse.json({ error: `Limite de ${FREE_PRIVATE_LIST_LIMIT} listes privées atteinte. Débloquez « Listes illimitées » dans la page Points.` }, { status: 403 })
+        }
     }
 
     const list = await prisma.list.create({

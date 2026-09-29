@@ -42,3 +42,7 @@ next-env.d.ts
 
 
 public/uploads/
+!.env.production.example
+
+# SQLite (ancienne base de dev)
+prisma/dev.db*

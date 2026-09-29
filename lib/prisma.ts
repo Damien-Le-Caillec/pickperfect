@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { warn } from "console";
 
 const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined

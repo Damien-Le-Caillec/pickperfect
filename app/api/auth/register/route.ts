@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies, headers } from 'next/headers'
 import { createUser, createSession } from '@/lib/auth/sqlite-auth'
-import { checkRateLimit } from '@/lib/security/rateLimit'
+import { checkRateLimit, getClientIp } from '@/lib/security/rateLimit'
 import { z } from 'zod'
 import { sendEmail } from '@/lib/email/mailer'
 import { welcomeEmail } from '@/lib/email/templates'
+import { verifyUrl } from '@/lib/auth/emailVerification'
+import { addPoints } from '@/lib/gamification/pointsService'
 
 const Schema = z.object({
   email:    z.string().email(),
@@ -15,10 +17,7 @@ const Schema = z.object({
 export async function POST(request: NextRequest) {
   // Rate limiting
   const headerStore = await headers()
-  const ip =
-    headerStore.get('x-forwarded-for') ??
-    headerStore.get('x-real-ip') ??
-    'unknow'
+  const ip = getClientIp(headerStore)
 
   const ua = headerStore.get('user-agent') ?? undefined
 
@@ -63,14 +62,16 @@ export async function POST(request: NextRequest) {
       path: '/',
     })
 
-    const tpl = welcomeEmail(parsed.data.name ?? '')
+    await addPoints(user.id, 'signup_bonus').catch(() => {})
+
+    const tpl = welcomeEmail(parsed.data.name ?? '', user.unsubscribeToken ?? undefined, verifyUrl(user.id, user.email))
     sendEmail({ to: parsed.data.email, subject: tpl.subject, html: tpl.html })
       .catch(err => console.error('Welcome email error:', err))
 
     return NextResponse.json({ success: true }, { status: 201 })
-  } catch (err: any) {
+  } catch (err) {
     return NextResponse.json(
-      { error: err.message || 'Erreur serveur' },
+      { error: (err as Error).message || 'Erreur serveur' },
       { status: 400 }
     )
   }

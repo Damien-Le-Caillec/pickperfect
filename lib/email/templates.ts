@@ -36,8 +36,53 @@ const footerStyle = `
     border-top: 1px solid #E7E5E4;
 `
 
-export function welcomeEmail(name: string, unsubscribeToken?: string) {
-    const firstName = name?.split(' ')[0] || 'vous'
+// Échappe les valeurs saisies par l'utilisateur avant de les insérer dans le HTML
+function escapeHtml(value: string): string {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+}
+
+export function verifyEmailEmail(name: string, url: string) {
+    const firstName = escapeHtml(name?.split(' ')[0] || '')
+    return {
+        subject: '✉️ Confirmez votre adresse email PickPerfect',
+        html: `
+        <div style="${styles}">
+            <div style="${cardStyle}">
+            <h1 style="font-size: 24px; font-weight: 800; color: #1C1917; margin: 0 0 8px;">
+                Confirmez votre adresse${firstName ? `, ${firstName}` : ''}
+            </h1>
+            <p style="color: #57534E; line-height: 1.65; margin: 0 0 8px;">
+                Cliquez sur le bouton ci-dessous pour confirmer votre adresse email.
+            </p>
+            <p style="color: #A8A29E; font-size: 14px; margin: 0 0 24px;">
+                Ce lien expire dans <strong>7 jours</strong>.
+            </p>
+            <a href="${url}" style="${btnStyle}">Confirmer mon adresse</a>
+            <p style="color: #A8A29E; font-size: 13px; line-height: 1.6;">
+                Si vous n'avez pas créé de compte PickPerfect, ignorez cet email.
+            </p>
+            <div style="${footerStyle}">
+                <p>PickPerfect · <a href="${BASE_URL}/legal/privacy" style="color: #A8A29E;">Confidentialité</a></p>
+            </div>
+            </div>
+        </div>
+        `,
+    }
+}
+
+export function welcomeEmail(name: string, unsubscribeToken?: string, verifyUrl?: string) {
+    const firstName = escapeHtml(name?.split(' ')[0] || 'vous')
+    const verifyBlock = verifyUrl
+        ? `<p style="color: #57534E; line-height: 1.65; margin: 0;">
+                Commencez par confirmer votre adresse email :
+            </p>
+            <a href="${verifyUrl}" style="${btnStyle}">Confirmer mon adresse</a>`
+        : ''
     const unsubLink = unsubscribeToken
         ? `<p><a href="${BASE_URL}/unsubscribe?token=${unsubscribeToken}" style="color: #A8A29E;">Se désabonner des emails</a></p>`
         : ''
@@ -54,6 +99,7 @@ export function welcomeEmail(name: string, unsubscribeToken?: string) {
                 Votre compte PickPerfect est prêt. Vous pouvez dès maintenant
                 créer vos premières listes de cadeaux et les partager avec vos proches.
             </p>
+            ${verifyBlock}
             <a href="${BASE_URL}/lists/new" style="${btnStyle}">
                 Créer ma première liste
             </a>

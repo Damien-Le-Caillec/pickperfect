@@ -64,7 +64,7 @@ export default function LoginPage() {
 
     // Vérifier si une redirection est demandée (?redirect=/lists/xxx)
     const redirectTo = new URLSearchParams(window.location.search).get('redirect')
-    router.push(redirectTo || '/dashboard')
+    router.push(redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/dashboard")
     router.refresh()
   }
 

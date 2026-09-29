@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { validateSession } from "@/lib/auth/sqlite-auth";
-import { writeFile, mkdir } from "fs/promises";
+import { mkdir } from "fs/promises";
 import { join } from "path";
 import sharp from "sharp";
 import crypto from 'crypto'
-import { error } from "console";
-import { mk } from "zod/locales";
+import { safeFetch } from "@/lib/security/safeFetch";
+import { rateLimitResponse } from "@/lib/security/rateLimit";
+
+const MAX_BYTES = 10 * 1024 * 1024
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -21,13 +23,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
+    const limited = rateLimitResponse(`upload-url:${session.userId}`, { limit: 30, windowMs: 60 * 1000 })
+    if (limited) return limited
+
     const { imageUrl } = await request.json()
-    if (!imageUrl) {
+    if (!imageUrl || typeof imageUrl !== 'string') {
         return NextResponse.json({ error: 'URL requise' }, { status: 400 })
     }
 
     try {
-        const res = await fetch(imageUrl,{
+        // safeFetch refuse les adresses internes (protection SSRF)
+        const res = await safeFetch(imageUrl, {
             headers: { 'User-Agent': 'Mozilla/5.0' },
             signal: AbortSignal.timeout(10000),
         })
@@ -41,9 +47,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'URL ne pointe pas vers une image' }, { status: 400 })
         }
 
+        if (Number(res.headers.get('content-length') ?? 0) > MAX_BYTES) {
+            return NextResponse.json({ error: 'Image trop lourde' }, { status: 400 })
+        }
+
         const buffer = Buffer.from(await res.arrayBuffer())
 
-        if (buffer.length > 10 * 1024 * 1024) {
+        if (buffer.length > MAX_BYTES) {
             return NextResponse.json({ error: 'Image trop lourde' }, { status: 400 })
         }
 
@@ -63,7 +73,8 @@ export async function POST(request: NextRequest) {
             .toFile(join(uploadDir, filename))
 
         return NextResponse.json({ imageUrl: `/uploads/items/${filename}`})
-    } catch (err: any) {
-        return NextResponse.json({ error: 'Erreur lors du traitement' }, { status: 500 })
+    } catch (err) {
+        console.error('Upload from URL error:', err)
+        return NextResponse.json({ error: "Impossible de récupérer l'image" }, { status: 400 })
     }
 }

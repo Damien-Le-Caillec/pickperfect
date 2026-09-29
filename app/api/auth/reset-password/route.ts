@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from 'bcrypt'
-import { success, z } from 'zod'
+import { z } from 'zod'
 
 const Schema = z.object({
     token : z.string().min(1),

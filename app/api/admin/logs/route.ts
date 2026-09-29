@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/admin";
-import { error } from "console";
-import { email } from "zod";
 
 export async function GET() {
     const session = await requireAdmin()

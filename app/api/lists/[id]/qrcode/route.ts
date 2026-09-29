@@ -3,6 +3,8 @@ import { cookies }                   from 'next/headers'
 import { prisma }                    from '@/lib/prisma'
 import { validateSession }           from '@/lib/auth/sqlite-auth'
 import QRCode                        from 'qrcode'
+import { hasReward }                 from '@/lib/points/rewards'
+import { getAccentColor }            from '@/lib/profile/theme'
 
 async function getSession() {
   const cookieStore = await cookies()
@@ -32,12 +34,19 @@ export async function GET(
     ? `${process.env.NEXT_PUBLIC_APP_URL}/l/${list.shareToken}`
     : `${process.env.NEXT_PUBLIC_APP_URL}/lists/${id}`
 
+  // Récompense r6 : QR code aux couleurs du profil
+  let dark = '#1C1917'
+  if (await hasReward(session.userId, 'r6')) {
+    const owner = await prisma.user.findUnique({ where: { id: session.userId }, select: { accentColor: true } })
+    dark = getAccentColor(owner?.accentColor)
+  }
+
   const svg = await QRCode.toString(url, {
     type:          'svg',
     width:         300,
     margin:        2,
     color: {
-      dark:  '#1C1917',
+      dark,
       light: '#FAFAF9',
     },
   })

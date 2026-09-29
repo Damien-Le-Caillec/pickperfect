@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth/sqlite-auth";
-import { success } from "zod";
 
 export async function POST() {
     const cookieStore = await cookies()

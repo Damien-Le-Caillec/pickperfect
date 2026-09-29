@@ -2,38 +2,33 @@
 
 import { useState, useEffect } from 'react'
 import PageLayout from '@/components/layout/PageLayout'
+import { ACCENT_COLORS, BANNER_COLORS, getAccentColor, getBannerValue } from '@/lib/profile/theme'
 
-const ACCENT_COLORS = [
-  { id: 'peach',    label: 'Pêche',    color: '#FF7B6B' },
-  { id: 'lavender', label: 'Lavande',  color: '#A78BFA' },
-  { id: 'mint',     label: 'Menthe',   color: '#34D399' },
-  { id: 'gold',     label: 'Or',       color: '#FBBF24' },
-]
-
-const BANNER_COLORS = [
-  { id: 'sunset',     label: 'Coucher de soleil', value: 'linear-gradient(135deg,#FF7B6B,#FF9A5C,#A78BFA)' },
-  { id: 'aurora',     label: 'Aurora',            value: 'linear-gradient(135deg,#34D399,#059669,#A78BFA)' },
-  { id: 'fire',       label: 'Feu',               value: 'linear-gradient(135deg,#FBBF24,#F97316,#EF4444)' },
-  { id: 'night',      label: 'Nuit étoilée',      value: 'linear-gradient(135deg,#0F0C29,#302B63,#24243E)' },
-  { id: 'ocean',      label: 'Océan',             value: 'linear-gradient(135deg,#0EA5E9,#0284C7,#34D399)' },
-  { id: 'rose',       label: 'Rose bonbon',       value: 'linear-gradient(135deg,#FDA4AF,#FB7185,#A78BFA)' },
-  { id: 'forest',     label: 'Forêt',             value: 'linear-gradient(135deg,#166534,#15803D,#4ADE80)' },
-  { id: 'candy',      label: 'Candy',             value: 'linear-gradient(135deg,#F0ABFC,#E879F9,#818CF8)' },
-  { id: 'gold',       label: 'Or',                value: 'linear-gradient(135deg,#FBBF24,#D97706,#92400E)' },
-  { id: 'ice',        label: 'Glace',             value: 'linear-gradient(135deg,#BAE6FD,#7DD3FC,#A5B4FC)' },
-  { id: 'lava',       label: 'Lave',              value: 'linear-gradient(135deg,#7C3AED,#DB2777,#F97316)' },
-  { id: 'midnight',   label: 'Minuit',            value: 'linear-gradient(135deg,#1E1B4B,#4C1D95,#2563EB)' },
-]
-
-function getBannerValue(id: string) {
-  return BANNER_COLORS.find(b => b.id === id)?.value ?? BANNER_COLORS[0].value
+interface ProfileStats {
+  lists:        number
+  reservations: number
+  friends:      number
+  badges:       number
+  streak:       number
+  points:       number
 }
 
-function getAccentColor(id: string) {
-  return ACCENT_COLORS.find(a => a.id === id)?.color ?? '#FF7B6B'
+interface ProfileUser {
+  id:                  string
+  name:                string | null
+  email:               string
+  bio:                 string | null
+  city:                string | null
+  avatarUrl:           string | null
+  accentColor:         string | null
+  bannerColor:         string | null
+  birthDate:           string | null
+  emailNotifications:  boolean
+  unlockedRewards?:    string[]
+  stats?:              ProfileStats
 }
 
-function calcCompletion(user: any, stats: any): { pct: number; missing: string[] } {
+function calcCompletion(user: ProfileUser, stats?: ProfileStats): { pct: number; missing: string[] } {
   const steps = [
     { done: !!user.avatarUrl,                    label: 'Ajouter une photo de profil' },
     { done: !!user.name,                         label: 'Définir un nom d\'affichage' },
@@ -48,7 +43,7 @@ function calcCompletion(user: any, stats: any): { pct: number; missing: string[]
 }
 
 export default function ProfilePage() {
-  const [user,   setUser]   = useState<any>(null)
+  const [user,   setUser]   = useState<ProfileUser | null>(null)
   const [form,   setForm]   = useState({ name: '', bio: '', city: '', accentColor: 'peach', bannerColor: 'gradient-peach-lavender', birthDate: '' })
   const [saving, setSaving] = useState(false)
   const [msg,    setMsg]    = useState('')
@@ -103,7 +98,7 @@ export default function ProfilePage() {
     const data = await res.json()
     setUploadingAvatar(false)
     if (res.ok) {
-      setUser((u: any) => ({ ...u, avatarUrl: data.avatarUrl }))
+      setUser(u => (u ? { ...u, avatarUrl: data.avatarUrl } : u))
     }
   }
 
@@ -133,6 +128,8 @@ export default function ProfilePage() {
   const { pct, missing } = calcCompletion(user, user.stats)
   const accent           = getAccentColor(form.accentColor)
   const initials         = user.name?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? '?'
+  const rewards: string[] = user.unlockedRewards ?? []
+  const premiumTheme     = rewards.includes('r1')
 
   return (
     <PageLayout>
@@ -163,7 +160,10 @@ export default function ProfilePage() {
 
         {/* ---- Nom + Stats ---- */}
         <div style={{ paddingTop: '2.5rem', marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 800 }}>{user.name ?? 'Utilisateur'}</h1>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 800 }}>
+            {user.name ?? 'Utilisateur'}
+            {rewards.includes('r3') && <i className="fas fa-star" title="Étoile premium" style={{ color: '#FBBF24', marginLeft: 8, fontSize: '1rem' }} />}
+          </h1>
           {user.bio  && <p style={{ color: 'var(--text-2)', marginTop: 4 }}>{user.bio}</p>}
           {user.city && <p style={{ color: 'var(--text-3)', fontSize: '0.85rem', marginTop: 2 }}><i className="fas fa-map-marker-alt" style={{ marginRight: 4 }} />{user.city}</p>}
 
@@ -258,8 +258,8 @@ export default function ProfilePage() {
             {/* Couleur d'accent */}
             <div className="form-group" style={{ marginBottom: '1rem' }}>
               <label className="label">Couleur d'accent</label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {ACCENT_COLORS.map(c => (
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {ACCENT_COLORS.filter(c => !c.premium || premiumTheme).map(c => (
                   <button
                     key={c.id} type="button"
                     onClick={() => setForm(p => ({ ...p, accentColor: c.id }))}
@@ -276,11 +276,18 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {!premiumTheme && (
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginTop: '-0.5rem', marginBottom: '1rem' }}>
+                <i className="fas fa-palette" style={{ marginRight: 4 }} />
+                Plus de couleurs avec la récompense « Thème coloré » (page Points).
+              </p>
+            )}
+
             {/* Couleur de bannière */}
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label className="label">Bannière de profil</label>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {BANNER_COLORS.map(b => (
+                {BANNER_COLORS.filter(b => !b.premium || premiumTheme).map(b => (
                   <button
                     key={b.id} type="button"
                     onClick={() => setForm(p => ({ ...p, bannerColor: b.id }))}

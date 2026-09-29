@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isHttpUrl } from '@/lib/utils/safeUrl'
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth/sqlite-auth";
@@ -42,7 +43,7 @@ const UpdateSchema = z.object({
     title: z.string().min(1).max(200).optional(),
     description: z.string().max(500).optional(),
     price: z.number().positive().optional().nullable(),
-    url: z.string().url().optional().or(z.literal('')),
+    url: z.string().url().refine(isHttpUrl, 'Lien http(s) requis').optional().or(z.literal('')),
     imageUrl: z.string().url().optional().or(z.literal('')),
     priority: z.number().int().min(0).max(3).optional(),
 })

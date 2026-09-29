@@ -40,7 +40,6 @@ const SECTIONS = [
       ['Données de compte', '3 ans après la dernière activité'],
       ['Données de transaction', '10 ans (obligation légale)'],
       ['Logs d\'accès', '1 an'],
-      ['Cookies analytiques', '13 mois maximum'],
       ['Sauvegardes', '30 jours en rotation'],
     ],
   },
@@ -57,7 +56,7 @@ const SECTIONS = [
       'Mots de passe hashés avec bcrypt (12 rounds)',
       'Sessions stockées en base avec expiration automatique',
       'Accès à la base de données restreint',
-      'Sauvegardes chiffrées quotidiennes',
+      'Sauvegardes quotidiennes',
     ],
   },
   {
@@ -68,7 +67,7 @@ const SECTIONS = [
   {
     id: 'tiers',
     title: 'Partage avec des tiers',
-    body: `Nous ne vendons jamais vos données personnelles. Vos données peuvent être transmises aux marchands affiliés (Amazon, FNAC, Darty) uniquement dans le cadre du suivi des commissions, conformément à leurs propres politiques de confidentialité.`,
+    body: `Nous ne vendons jamais vos données personnelles. Vos données peuvent être transmises aux marchands affiliés (Amazon, FNAC, Darty) uniquement dans le cadre du suivi des commissions, conformément à leurs propres politiques de confidentialité. Les emails sont envoyés via notre prestataire d'envoi d'emails (SMTP). Lorsque vous ajoutez un produit par son lien, l'adresse de la page produit (et elle seule) peut être transmise au service allorigins.win pour en récupérer le titre, le prix et l'image.`,
   },
 ]
 

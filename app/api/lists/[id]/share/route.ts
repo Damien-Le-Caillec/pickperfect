@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from '@/lib/prisma'
 import { validateSession } from "@/lib/auth/sqlite-auth";
-import { addPoints } from "@/lib/gamification/pointsService";
+import { addPoints, awardBadge } from "@/lib/gamification/pointsService";
 import crypto from 'crypto'
+import { progressChallenge } from "@/lib/gamification/challenges";
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -41,6 +42,8 @@ export async function POST(
     // Points partage (seulement au premier partage)
     if (isFirstShare) {
         await addPoints(session.userId, 'list_share').catch(() => {})
+        await awardBadge(session.userId, 'sharer').catch(() => {})
+        await progressChallenge(session.userId, 'share_list').catch(() => {})
     }
 
     const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/l/${shareToken}`

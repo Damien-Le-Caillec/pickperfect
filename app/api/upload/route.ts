@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { validateSession } from "@/lib/auth/sqlite-auth";
-import { writeFile, mkdir } from "fs/promises";
+import { mkdir } from "fs/promises";
 import { join } from "path";
 import sharp from "sharp";
 import crypto from 'crypto';
-import { buffer } from "stream/consumers";
 
 async function getSession() {
     const cookieStore = await cookies()

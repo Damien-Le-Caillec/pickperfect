@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isHttpUrl } from '@/lib/utils/safeUrl'
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth/sqlite-auth";
 import { generateAffiliateLink } from '@/lib/affiliate'
-import { describe } from "zod/v4/core";
-import { error } from "console";
+import { progressChallenge } from '@/lib/gamification/challenges'
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -20,7 +20,7 @@ const CreateItemSchema = z.object({
     description: z.string().max(500).optional(),
     price: z.number().positive().optional(),
     currency: z.string().default('EUR'),
-    url: z.string().url().optional().or(z.literal('')),
+    url: z.string().url().refine(isHttpUrl, 'Lien http(s) requis').optional().or(z.literal('')),
     imageUrl: z.string().url().optional().or(z.literal('')),
     priority: z.number().int().min(0).max(10).default(0),
 })
@@ -86,6 +86,8 @@ export async function POST(request: NextRequest) {
             commissionRate,
         },
     })
+
+    await progressChallenge(session.userId, 'add_5_items').catch(() => {})
 
     return NextResponse.json(item, { status: 201 })
 }

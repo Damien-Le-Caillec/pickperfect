@@ -4,26 +4,27 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import PageLayout from '@/components/layout/PageLayout'
+import { getAccentColor, getBannerValue } from '@/lib/profile/theme'
 
-const BANNER_COLORS: Record<string, string> = {
-  'gradient-peach-lavender': 'linear-gradient(135deg,#FF7B6B,#A78BFA)',
-  'gradient-mint-lavender':  'linear-gradient(135deg,#34D399,#A78BFA)',
-  'gradient-gold-peach':     'linear-gradient(135deg,#FBBF24,#FF7B6B)',
-  'gradient-dark':           'linear-gradient(135deg,#1C1917,#3B3240)',
-  'gradient-ocean':          'linear-gradient(135deg,#0EA5E9,#34D399)',
-}
-
-const ACCENT_COLORS: Record<string, string> = {
-  peach:    '#FF7B6B',
-  lavender: '#A78BFA',
-  mint:     '#34D399',
-  gold:     '#FBBF24',
+interface PublicProfile {
+  id:          string
+  name:        string | null
+  email?:      string
+  bio:         string | null
+  city:        string | null
+  avatarUrl:   string | null
+  accentColor: string | null
+  bannerColor: string | null
+  birthDate:   string | null
+  perks?:      { star: boolean; premium: boolean }
+  stats?:      { lists: number; reservations: number; badges: number; streak: number }
+  lists?:      { id: string; title: string; eventDate: string | null; _count: { items: number } }[]
 }
 
 export default function PublicProfilePage() {
   const params  = useParams()
   const userId  = params.id as string
-  const [data,    setData]    = useState<any>(null)
+  const [data,    setData]    = useState<PublicProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -48,8 +49,10 @@ export default function PublicProfilePage() {
     </PageLayout>
   )
 
-  const accent   = ACCENT_COLORS[data.accentColor]  ?? '#FF7B6B'
-  const banner   = BANNER_COLORS[data.bannerColor]  ?? BANNER_COLORS['gradient-peach-lavender']
+  const accent   = getAccentColor(data.accentColor)
+  const banner   = getBannerValue(data.bannerColor)
+  const premium  = !!data.perks?.premium
+  const ring     = premium ? '3px solid #FBBF24' : '3px solid var(--bg)'
   const initials = data.name?.[0]?.toUpperCase() ?? data.email?.[0]?.toUpperCase() ?? '?'
 
   return (
@@ -58,15 +61,15 @@ export default function PublicProfilePage() {
 
         {/* Bannière + Avatar */}
         <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
-            <div style={{ height: 120, background: banner, borderRadius: 'var(--r-2xl)' }} />
+            <div style={{ height: premium ? 160 : 120, background: banner, borderRadius: 'var(--r-2xl)', boxShadow: premium ? '0 8px 30px rgba(251,191,36,0.35)' : undefined }} />
             <div style={{ position: 'absolute', bottom: -36, left: 20 }}>
             {data.avatarUrl ? (
               <img
                 src={data.avatarUrl} alt="Avatar"
-                style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--bg)' }}
+                style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: ring }}
               />
             ) : (
-              <div style={{ width: 72, height: 72, borderRadius: '50%', background: `linear-gradient(135deg, ${accent}, var(--lavender))`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: 'white', border: '3px solid var(--bg)' }}>
+              <div style={{ width: 72, height: 72, borderRadius: '50%', background: `linear-gradient(135deg, ${accent}, var(--lavender))`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: 'white', border: ring }}>
                 {initials}
               </div>
             )}
@@ -75,7 +78,15 @@ export default function PublicProfilePage() {
 
         {/* Infos */}
         <div style={{ paddingTop: '2rem', marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 800 }}>{data.name ?? 'Utilisateur'}</h1>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {data.name ?? 'Utilisateur'}
+            {data.perks?.star && <i className="fas fa-star" title="Étoile premium" style={{ color: '#FBBF24', fontSize: '1rem' }} />}
+            {premium && (
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '2px 10px', borderRadius: 999, background: 'linear-gradient(135deg,#FBBF24,#D97706)', color: 'white' }}>
+                <i className="fas fa-crown" style={{ marginRight: 4 }} />Premium
+              </span>
+            )}
+          </h1>
           {data.bio  && <p style={{ color: 'var(--text-2)', marginTop: 4 }}>{data.bio}</p>}
           {data.city && (
             <p style={{ color: 'var(--text-3)', fontSize: '0.85rem', marginTop: 2 }}>
@@ -114,7 +125,7 @@ export default function PublicProfilePage() {
           <p style={{ color: 'var(--text-3)', fontSize: '0.875rem' }}>Aucune liste publique.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {data.lists?.map((list: any) => (
+            {data.lists?.map(list => (
               <Link key={list.id} href={`/lists/${list.id}`} style={{ textDecoration: 'none' }}>
                 <div className="card" style={{ cursor: 'pointer' }}>
                   <div style={{ fontWeight: 700, marginBottom: 4 }}>{list.title}</div>

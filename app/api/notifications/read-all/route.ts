@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth/sqlite-auth";
-import { success } from "zod";
 
 async function getSession() {
     const cookieStore = await cookies()

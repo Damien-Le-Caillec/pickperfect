@@ -1,12 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { validateSession } from "@/lib/auth/sqlite-auth";
+import { rateLimitResponse } from "@/lib/security/rateLimit";
+import { assertPublicUrl, safeFetch } from "@/lib/security/safeFetch";
 
 async function getSession() {
     const cookieStore = await cookies()
     const id = cookieStore.get('auth_session')?.value
     if (!id) return null
     return validateSession(id)
+}
+
+const BROWSER_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml',
+    'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+}
+
+// Récupère le HTML : via le proxy allorigins (contourne certains anti-bots), sinon en direct
+async function fetchHtml(url: string): Promise<string | null> {
+    try {
+        const proxyRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
+            signal: AbortSignal.timeout(10000),
+        })
+        if (proxyRes.ok) {
+            const data = await proxyRes.json()
+            if (typeof data.contents === 'string' && data.contents.length > 0) return data.contents
+        }
+    } catch {}
+
+    const res = await safeFetch(url, { headers: BROWSER_HEADERS, signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return null
+    return (await res.text()).slice(0, 3_000_000)
 }
 
 function extractImages(html: string, baseUrl: string): string[] {
@@ -68,24 +93,22 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
+    const limited = rateLimitResponse(`from-url:${session.userId}`, { limit: 20, windowMs: 60 * 1000 })
+    if (limited) return limited
+
     const { url } = await request.json()
-    if (!url) {
+    if (!url || typeof url !== 'string') {
         return NextResponse.json({ error: 'URL requise' }, { status: 400 })
     }
 
     try {
-        // Proxy pour contourner les blocages anti-bot
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
-        const proxyRes = await fetch(proxyUrl, {
-            signal: AbortSignal.timeout(15000),
-        })
+        await assertPublicUrl(url)
+    } catch (err) {
+        return NextResponse.json({ error: (err as Error).message }, { status: 400 })
+    }
 
-        if (!proxyRes.ok) {
-            return NextResponse.json({ error: 'Impossible de lire cette page' }, { status: 400 })
-        }
-
-        const proxyData = await proxyRes.json()
-        const html = proxyData.contents as string
+    try {
+        const html = await fetchHtml(url)
 
         if (!html) {
             return NextResponse.json({ error: 'Page vide ou inaccessible' }, { status: 400 })
@@ -139,11 +162,11 @@ export async function POST(request: NextRequest) {
             images,
         })
 
-    } catch (err: any) {
+    } catch (err) {
         console.error('Scraping error:', err)
-        if (err.name === 'TimeoutError') {
+        if ((err as Error).name === 'TimeoutError') {
             return NextResponse.json({ error: 'La page met trop de temps à répondre' }, { status: 408 })
         }
-        return NextResponse.json({ error: err.message ?? 'Erreur lors de la récupération' }, { status: 500 })
+        return NextResponse.json({ error: 'Impossible de lire cette page' }, { status: 500 })
     }
 }

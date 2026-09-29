@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
             if (daysSinceLaunch === 3 && !hasWishes) {
                 await sendEmail({
                 to:      giver.email,
+                notification: true,
                 subject: `🎅 N'oublie pas ta liste de souhaits Secret Santa !`,
                 html: `<div style="font-family:sans-serif;max-width:520px;margin:40px auto;background:white;border-radius:16px;padding:40px">
                     <h1>🎁 Ta liste de souhaits Secret Santa</h1>
@@ -65,6 +66,7 @@ export async function GET(request: NextRequest) {
             if (daysUntilEvent === 7) {
                 await sendEmail({
                 to:      giver.email,
+                notification: true,
                 subject: `🎅 Plus que 7 jours pour le Secret Santa !`,
                 html: `<div style="font-family:sans-serif;max-width:520px;margin:40px auto;background:white;border-radius:16px;padding:40px">
                     <h1>⏰ Plus que 7 jours !</h1>
@@ -91,6 +93,7 @@ export async function GET(request: NextRequest) {
             if (daysUntilEvent === 3) {
                 await sendEmail({
                 to:      giver.email,
+                notification: true,
                 subject: `🚨 Secret Santa dans 3 jours — tu as ton cadeau ?`,
                 html: `<div style="font-family:sans-serif;max-width:520px;margin:40px auto;background:white;border-radius:16px;padding:40px">
                     <h1>🚨 Plus que 3 jours !</h1>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isHttpUrl } from '@/lib/utils/safeUrl'
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth/sqlite-auth";
@@ -46,6 +47,7 @@ export async function POST(
     const { title, description, price, url } = await request.json()
 
     if (!title?.trim()) return NextResponse.json({ error: 'Titre requis' }, { status: 400 })
+    if (url && !isHttpUrl(url)) return NextResponse.json({ error: 'Lien http(s) requis' }, { status: 400 })
     
     const santa = await prisma.secretSanta.findUnique({ where: { groupId: id } })
     if (!santa) return NextResponse.json({ error: 'Pas de Secret Santa' }, { status: 404 })

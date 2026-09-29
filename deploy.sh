@@ -5,13 +5,10 @@ echo "🚀 Déploiement PickPerfect..."
 cd ~/pickperfect
 
 echo "📥 Récupération du code..."
-git pull origin main
+git pull origin master
 
-echo "🏗️  Build et redémarrage..."
+echo "🏗️  Build et redémarrage (les migrations s'appliquent au démarrage de l'app)..."
 docker compose --env-file .env.production up -d --build
-
-echo "🗄️  Migrations..."
-docker compose --env-file .env.production exec -T app npx prisma migrate deploy
 
 echo "🧹 Nettoyage images Docker..."
 docker image prune -f

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies }                   from 'next/headers'
 import { prisma }                    from '@/lib/prisma'
 import { validateSession }           from '@/lib/auth/sqlite-auth'
+import { rateLimitResponse, getClientIp } from '@/lib/security/rateLimit'
 
 async function getSession() {
   const cookieStore = await cookies()
@@ -14,10 +15,16 @@ async function getSession() {
 export async function POST(request: NextRequest) {
   const session = await getSession()
 
+  const limited = rateLimitResponse(`feedback:${session?.userId ?? getClientIp(request.headers)}`, { limit: 5, windowMs: 60 * 60 * 1000 })
+  if (limited) return limited
+
   const { type, message, page } = await request.json()
 
   if (!message?.trim()) {
     return NextResponse.json({ error: 'Message requis' }, { status: 400 })
+  }
+  if (message.length > 2000) {
+    return NextResponse.json({ error: 'Maximum 2000 caractères' }, { status: 400 })
   }
 
   const feedback = await prisma.feedback.create({

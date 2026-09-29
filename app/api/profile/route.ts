@@ -3,6 +3,9 @@ import { cookies }                   from "next/headers"
 import { z }                         from "zod"
 import { prisma }                    from "@/lib/prisma"
 import { validateSession }           from "@/lib/auth/sqlite-auth"
+import { getUnlockedRewards } from '@/lib/points/rewards'
+import { isAccentAllowed, isBannerAllowed } from '@/lib/profile/theme'
+import { sendVerificationEmail } from '@/lib/auth/emailVerification'
 
 async function getSession() {
   const cookieStore = await cookies()
@@ -18,7 +21,7 @@ export async function GET() {
 
   const userId = session.userId
 
-  const [user, points, badgeCount, listCount, reservationCount, friendCount] = await Promise.all([
+  const [user, points, badgeCount, listCount, reservationCount, friendCount, unlockedRewards] = await Promise.all([
     prisma.user.findUnique({
       where:  { id: userId },
       select: {
@@ -51,12 +54,14 @@ export async function GET() {
         ],
       },
     }),
+    getUnlockedRewards(userId),
   ])
 
   if (!user) return NextResponse.json({ error: 'Introuvable' }, { status: 404 })
 
   return NextResponse.json({
     ...user,
+    unlockedRewards,
     stats: {
       lists:        listCount,
       reservations: reservationCount,
@@ -90,6 +95,16 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }
 
+  if (parsed.data.accentColor || parsed.data.bannerColor) {
+    const premium = (await getUnlockedRewards(session.userId)).includes('r1')
+    if (parsed.data.accentColor && !isAccentAllowed(parsed.data.accentColor, premium)) {
+      return NextResponse.json({ error: 'Couleur réservée au Thème coloré' }, { status: 403 })
+    }
+    if (parsed.data.bannerColor && !isBannerAllowed(parsed.data.bannerColor, premium)) {
+      return NextResponse.json({ error: 'Bannière réservée au Thème coloré' }, { status: 403 })
+    }
+  }
+
   if (parsed.data.email) {
     const existing = await prisma.user.findFirst({
       where: { email: parsed.data.email.toLowerCase().trim(), NOT: { id: session.userId } },
@@ -99,9 +114,14 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
+  const current      = await prisma.user.findUnique({ where: { id: session.userId }, select: { email: true } })
+  const newEmail     = parsed.data.email?.toLowerCase().trim()
+  const emailChanged = !!newEmail && newEmail !== current?.email
+
   const updated = await prisma.user.update({
     where: { id: session.userId },
     data:  {
+      ...(emailChanged ? { emailVerified: false } : {}),
       name:        parsed.data.name        ? parsed.data.name.trim()               : undefined,
       email:       parsed.data.email       ? parsed.data.email.toLowerCase().trim() : undefined,
       bio:         parsed.data.bio         ?? undefined,
@@ -112,6 +132,10 @@ export async function PATCH(request: NextRequest) {
     },
     select: { id: true, name: true, email: true },
   })
+
+  if (emailChanged) {
+    sendVerificationEmail(updated).catch(err => console.error('Verification email error:', err))
+  }
 
   return NextResponse.json({ success: true, user: updated })
 }

@@ -3,12 +3,15 @@ import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email/mailer'
 import { resetPasswordEmail } from '@/lib/email/templates'
 import crypto from 'crypto'
-import { success } from 'zod'
+import { rateLimitResponse, getClientIp } from '@/lib/security/rateLimit'
 
 export async function POST(request: NextRequest) {
+    const limited = rateLimitResponse(`forgot:${getClientIp(request.headers)}`, { limit: 5, windowMs: 60 * 60 * 1000 })
+    if (limited) return limited
+
     const { email } = await request.json()
 
-    if (!email) {
+    if (!email || typeof email !== 'string') {
         return NextResponse.json({ error: 'Email requis' }, { status: 400 })
     }
 

@@ -1,7 +1,5 @@
 import { NextRequest,  NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { use } from "react";
-import { success } from "zod";
 
 export async function POST(request: NextRequest) {
     const { token } = await request.json()

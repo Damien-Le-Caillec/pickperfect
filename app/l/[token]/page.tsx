@@ -5,10 +5,11 @@ import { redirect } from 'next/navigation'
 export default async function SharedListPage({
   params,
 }: {
-  params: { token: string }
+  params: Promise<{ token: string }>
 }) {
+  const { token } = await params
   const list = await prisma.list.findUnique({
-    where: { shareToken: params.token },
+    where: { shareToken: token },
   })
 
   if (!list) notFound()

@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt'
+import crypto from 'crypto'
 import { prisma } from '@/lib/prisma'
 
 const SALT_ROUNDS = 12
@@ -24,6 +25,7 @@ export async function createUser(
       email:          email.toLowerCase().trim(),
       hashedPassword,
       name:           name?.trim() || null,
+      unsubscribeToken: crypto.randomBytes(24).toString('hex'),
       // Initialiser le solde de points à la création
       points: {
         create: {},

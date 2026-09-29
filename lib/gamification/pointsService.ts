@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { BADGES_CONFIG } from '@/lib/points/catalog'
 
 export const POINTS_TABLE = {
   item_reservation:      5,
@@ -8,6 +9,7 @@ export const POINTS_TABLE = {
   daily_login:           2,
   daily_login_streak_7: 15,
   affiliate_purchase:  100,
+  signup_bonus:         50,
 } as const
 
 export type PointReason = keyof typeof POINTS_TABLE
@@ -18,7 +20,7 @@ export async function addPoints(
   override?: number,
   metadata?: Record<string, unknown>
 ): Promise<void> {
-  const points = override ?? (POINTS_TABLE as any)[reason] ?? 0
+  const points = override ?? (POINTS_TABLE as Record<string, number>)[reason] ?? 0
   if (points <= 0) return
 
   await prisma.$transaction([
@@ -57,23 +59,22 @@ export async function spendPoints(
   points: number,
   reason: string
 ): Promise<boolean> {
-  const p = await prisma.points.findUnique({ where: { userId } })
-  if (!p || p.availablePoints < points) return false
-
-  await prisma.$transaction([
-    prisma.pointTransaction.create({
-      data: { userId, type: 'SPENT', points, reason },
-    }),
-    prisma.points.update({
-      where: { userId },
+  // Décrément conditionnel : évite un solde négatif en cas de double clic
+  return prisma.$transaction(async tx => {
+    const updated = await tx.points.updateMany({
+      where: { userId, availablePoints: { gte: points } },
       data:  {
         availablePoints: { decrement: points },
         spentPoints:     { increment: points },
       },
-    }),
-  ])
+    })
+    if (updated.count === 0) return false
 
-  return true
+    await tx.pointTransaction.create({
+      data: { userId, type: 'SPENT', points, reason },
+    })
+    return true
+  })
 }
 
 export async function processDailyLogin(userId: string): Promise<number> {
@@ -149,14 +150,7 @@ async function checkBadges(userId: string): Promise<void> {
   })
   const earned = new Set(existing.map(b => b.badgeId))
 
-  const toCheck = [
-    { id: 'first_step',        name: 'Premier pas',  desc: 'Bienvenue sur PickPerfect',       cond: true                    },
-    { id: 'first_reservation', name: 'Généreux',     desc: 'Première réservation effectuée',  cond: p.totalPoints >= 5      },
-    { id: 'bronze',            name: 'Bronze',       desc: '100 points gagnés',               cond: p.totalPoints >= 100    },
-    { id: 'silver',            name: 'Argent',       desc: '500 points gagnés',               cond: p.totalPoints >= 500    },
-    { id: 'gold',              name: 'Or',           desc: '1000 points gagnés',              cond: p.totalPoints >= 1000   },
-    { id: 'level5',            name: 'Niveau 5',     desc: 'Atteindre le niveau 5',           cond: p.level >= 5            },
-  ]
+  const toCheck = BADGES_CONFIG.map(b => ({ ...b, cond: b.condition(p) }))
 
   for (const badge of toCheck) {
     if (!earned.has(badge.id) && badge.cond) {
@@ -170,4 +164,14 @@ async function checkBadges(userId: string): Promise<void> {
       })
     }
   }
+}
+// Attribue un badge lié à une action précise (idempotent)
+export async function awardBadge(userId: string, badgeId: string): Promise<void> {
+  const badge = BADGES_CONFIG.find(b => b.id === badgeId)
+  if (!badge) return
+  const existing = await prisma.userBadge.findFirst({ where: { userId, badgeId } })
+  if (existing) return
+  await prisma.userBadge.create({
+    data: { userId, badgeId, badgeName: badge.name, description: badge.desc },
+  })
 }

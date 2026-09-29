@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎁 PickPerfect
 
-## Getting Started
+Plateforme de listes de cadeaux à partager : créez vos listes, invitez vos proches,
+ils réservent les cadeaux sans que vous le sachiez — fini les doublons.
 
-First, run the development server:
+**Fonctionnalités** : listes (publiques / non listées / privées, collaboratives, mode surprise),
+ajout de produits par URL, réservations et cagnottes, groupes et Secret Santa, amis,
+anniversaires avec rappels, commentaires, notifications, points / badges / défis / récompenses,
+export PDF et QR code, liens affiliés, espace admin.
+
+**Stack** : Next.js 16 (App Router) · React 19 · TypeScript · Prisma 5 + PostgreSQL · Docker.
+
+---
+
+## Développement local
+
+Prérequis : Node 20+, Docker Desktop.
 
 ```bash
+npm install
+
+# 1. Base Postgres de dev (port 5433)
+docker compose -f docker-compose.dev.yml up -d
+
+# 2. Dans .env ET .env.local :
+#    DATABASE_URL="postgresql://pickperfect:pickperfect@localhost:5433/pickperfect"
+
+# 3. Créer les tables
+npm run db:migrate
+
+# 4. Lancer
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+→ http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Sans SMTP configuré, les emails sont affichés dans la console (mode dev).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Commandes utiles :
 
-## Learn More
+| Commande | Rôle |
+|---|---|
+| `npm run db:studio` | Interface pour voir / modifier la base |
+| `npm run db:migrate` | Créer une migration après modification de `prisma/schema.prisma` |
+| `npm run db:reset` | Vider et recréer la base de dev |
+| `npx eslint .` | Lint |
+| `npx tsc --noEmit` | Vérification des types |
 
-To learn more about Next.js, take a look at the following resources:
+Pour passer un compte en admin : `npm run db:studio` → table `users` → colonne `role` = `ADMIN`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Production
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Sur le serveur (Docker + Docker Compose installés) :
 
-## Deploy on Vercel
+```bash
+git clone https://github.com/Damien-Le-Caillec/pickperfect.git ~/pickperfect
+cd ~/pickperfect
+cp .env.production.example .env.production   # puis remplir les valeurs
+./deploy.sh
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`docker-compose.yml` lance 3 services :
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **postgres** — la base (volume `pgdata`)
+- **app** — Next.js ; les migrations Prisma s'appliquent automatiquement au démarrage
+- **cron** — appelle chaque jour `/api/cron/birthdays` et `/api/cron/secret-santa`
+
+Les fichiers envoyés (avatars, images) sont dans le volume `uploads`.
+`backup.sh` sauvegarde la base et les uploads (à planifier en crontab sur le serveur).
+
+L'application écoute sur le port 3000 : placez un reverse proxy HTTPS devant
+(Caddy, Nginx, Traefik…).
+
+## Organisation du code
+
+```
+app/            pages et routes API (app/api/**/route.ts)
+components/     composants partagés (Header, PageLayout…)
+lib/            logique métier : auth, emails, points, affiliation, sécurité
+prisma/         schéma et migrations
+proxy.ts        protection des pages privées (ex-middleware)
+cron/           planification des tâches quotidiennes (conteneur cron)
+```
+
+Ce qui reste à configurer à la main (infos légales, comptes affiliés, SMTP…) est listé
+dans [A_COMPLETER.md](A_COMPLETER.md).

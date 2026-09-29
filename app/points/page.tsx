@@ -61,6 +61,26 @@ function txStyle(type: string, reason: string) {
   return { icon: 'fa-plus-circle', bg: 'rgba(162,228,184,0.12)', color: 'var(--mint-dark)' }
 }
 
+interface Challenge {
+  id:        string
+  label:     string
+  progress:  number
+  target:    number
+  rewardPts: number
+  completed: boolean
+}
+
+// Libellé d'une transaction ("reward_redeemed:r3" → "Récompense échangée · Étoile premium")
+function txLabel(reason: string): string {
+  const [key, detail] = reason.split(':')
+  const base = ACTION_LABELS[key] ?? reason
+  if (key === 'reward_redeemed' && detail) {
+    const reward = REWARDS.find(r => r.id === detail)
+    return reward ? `${base} · ${reward.name}` : base
+  }
+  return base
+}
+
 export default function PointsPage() {
   const [tab, setTab] = useState<'rewards' | 'badges' | 'challenges' | 'history'>('rewards')
   const [points,       setPoints]       = useState<Points | null>(null)
@@ -70,7 +90,8 @@ export default function PointsPage() {
   const [redeeming, setRedeeming] = useState<string | null>(null)
   const [redeemMsg, setRedeemMsg] = useState('')
   const [redeemError, setRedeemError] = useState('')
-  const [challenges, setChallenges] = useState<any[]>([])
+  const [challenges, setChallenges] = useState<Challenge[]>([])
+  const [unlocked, setUnlocked] = useState<string[]>([])
 
   useEffect(() => {
     fetch('/api/points')
@@ -79,9 +100,13 @@ export default function PointsPage() {
         setPoints(data.points)
         setEarnedBadges(data.badges)
         setTransactions(data.transactions)
+        setUnlocked(data.unlockedRewards ?? [])
         setLoading(false)
       })
-    fetch('/api/challenges').then(r => r.json()).then(d => setChallenges(d))
+    fetch('/api/challenges')
+      .then(r => (r.ok ? r.json() : []))
+      .then(d => setChallenges(Array.isArray(d) ? d : []))
+      .catch(() => {})
   }, [])
 
   const handleRedeem = async (rewardId: string, rewardName: string, cost: number) => {
@@ -111,7 +136,9 @@ export default function PointsPage() {
       .then(r => r.json())
       .then(d => {
         setPoints(d.points)
-        setTransactions(d.transaction)
+        setTransactions(d.transactions)
+        setEarnedBadges(d.badges)
+        setUnlocked(d.unlockedRewards ?? [])
       })
   }
 
@@ -237,9 +264,11 @@ export default function PointsPage() {
               {REWARDS.map(reward => {
                 const locked = available < reward.cost
                 const missing = reward.cost - available
+                const owned = reward.status === 'auto' && unlocked.includes(reward.id)
+                const soon = reward.status === 'soon'
 
                 return (
-                  <div key={reward.id} className={`${styles.rewardCard} ${locked ? styles.locked : ''}`}>
+                  <div key={reward.id} className={`${styles.rewardCard} ${locked || soon ? styles.locked : ''}`}>
                     <div className={styles.rewardIconWrap} style={{ background: REWARD_COLORS[reward.category] }}>
                       <i className={`fas ${reward.icon}`} />
                     </div>
@@ -247,7 +276,17 @@ export default function PointsPage() {
                     <div className={styles.rewardDesc}>{reward.desc}</div>
                     <div className={styles.rewardCost}>{reward.cost.toLocaleString('fr-FR')} pts</div>
 
-                    {locked ? (
+                    {owned ? (
+                      <div className={styles.rewardMissing} style={{ color: 'var(--mint-dark)' }}>
+                        <i className='fas fa-check-circle' style={{ marginRight: 4 }} />
+                        Débloquée
+                      </div>
+                    ) : soon ? (
+                      <div className={styles.rewardMissing}>
+                        <i className='fas fa-clock' style={{ marginRight: 4 }} />
+                        Bientôt disponible
+                      </div>
+                    ) : locked ? (
                       <div className={styles.rewardMissing}>
                         <i className='fas fa-lock' style={{ marginRight: 4 }} />
                         {missing.toLocaleString('fr-FR')} pts manquants
@@ -317,6 +356,43 @@ export default function PointsPage() {
         {/* ==================================================
             HISTORIQUE
         ================================================== */}
+        {tab === 'challenges' && (
+          challenges.length === 0 ? (
+            <div className="empty">
+              <div className="empty-icon"><i className="fas fa-fire" /></div>
+              <h3>Aucun défi cette semaine</h3>
+              <p>Revenez lundi pour de nouveaux défis.</p>
+            </div>
+          ) : (
+            <div className={styles.historyList}>
+              {challenges.map(c => {
+                const pct = Math.round((c.progress / c.target) * 100)
+                return (
+                  <div key={c.id} className={styles.historyItem}>
+                    <div
+                      className={styles.historyIcon}
+                      style={{
+                        background: c.completed ? 'rgba(162,228,184,0.15)' : 'rgba(255,154,139,0.12)',
+                        color:      c.completed ? 'var(--mint-dark)' : 'var(--peach-dark)',
+                      }}
+                    >
+                      <i className={`fas ${c.completed ? 'fa-check' : 'fa-fire'}`} />
+                    </div>
+                    <div className={styles.historyInfo} style={{ flex: 1 }}>
+                      <div className={styles.historyLabel}>{c.label}</div>
+                      <div style={{ height: 6, borderRadius: 999, background: 'var(--border-1)', marginTop: 6, overflow: 'hidden' }}>
+                        <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg,var(--peach),var(--lavender))' }} />
+                      </div>
+                      <div className={styles.historyDate}>{c.progress} / {c.target}</div>
+                    </div>
+                    <div className={styles.historyPoints}>+{c.rewardPts}</div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        )}
+
         {tab === 'history' && (
           transactions.length === 0 ? (
             <div className="empty">
@@ -339,7 +415,7 @@ export default function PointsPage() {
 
                     <div className={styles.historyInfo}>
                       <div className={styles.historyLabel}>
-                        {ACTION_LABELS[tx.reason] ?? tx.reason}
+                        {txLabel(tx.reason)}
                       </div>
                       <div className={styles.historyDate}>
                         {new Date(tx.createdAt).toLocaleDateString('fr-FR', {

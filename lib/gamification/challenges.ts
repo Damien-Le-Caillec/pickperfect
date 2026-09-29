@@ -10,6 +10,9 @@ export const CHALLENGES = [
 
 export type ChallengeId = typeof CHALLENGES[number]['id']
 
+// Nombre de défis tirés chaque semaine
+const WEEKLY_COUNT = 3
+
 function getWeekStart(): Date {
   const now  = new Date()
   const day  = now.getDay() // 0 = dimanche
@@ -27,11 +30,14 @@ export async function ensureWeeklyChallenges(userId: string) {
   const existing = await prisma.weeklyChallenge.findMany({
     where: { userId, weekStart },
   })
-  if (existing.length >= CHALLENGES.length) return existing
+  if (existing.length >= WEEKLY_COUNT) return existing
 
-  // Choisir 3 défis aléatoires parmi les disponibles
-  const shuffled  = [...CHALLENGES].sort(() => Math.random() - 0.5).slice(0, 3)
+  // Compléter jusqu'à 3 défis aléatoires parmi ceux pas encore tirés
   const existingIds = new Set(existing.map(c => c.challengeId))
+  const shuffled    = CHALLENGES
+    .filter(c => !existingIds.has(c.id))
+    .sort(() => Math.random() - 0.5)
+    .slice(0, WEEKLY_COUNT - existing.length)
 
   for (const c of shuffled) {
     if (!existingIds.has(c.id)) {
@@ -69,6 +75,6 @@ export async function progressChallenge(userId: string, challengeId: ChallengeId
   })
 
   if (completed) {
-    await addPoints(userId, 'badge_earned', challenge.rewardPts)
+    await addPoints(userId, 'challenge_completed', challenge.rewardPts, { challengeId })
   }
 }

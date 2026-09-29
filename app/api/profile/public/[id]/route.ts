@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma }                    from '@/lib/prisma'
+import { getUnlockedRewards }      from '@/lib/points/rewards'
 
 export async function GET(
   _req: NextRequest,
@@ -37,11 +38,16 @@ export async function GET(
       prisma.points.findUnique({ where: { userId: id }, select: { currentStreak: true } }),
     ]),
   ])
+  const rewards = user ? await getUnlockedRewards(id) : []
 
   if (!user) return NextResponse.json({ error: 'Introuvable' }, { status: 404 })
 
   return NextResponse.json({
     ...user,
+    perks: {
+      star:    rewards.includes('r3'),
+      premium: rewards.includes('r7'),
+    },
     stats: {
       lists:        stats[0],
       reservations: stats[1],

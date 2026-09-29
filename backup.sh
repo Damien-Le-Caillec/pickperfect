@@ -12,5 +12,6 @@ docker compose -f ~/pickperfect/docker-compose.yml \
 tar -czf $BACKUP_DIR/uploads_$DATE.tar.gz \
   -C ~/pickperfect/public uploads 2>/dev/null || true
 
-find $BACKUP_DIR -type f -mtime +14 -delete
+# Rotation sur 30 jours (durée annoncée dans la politique de confidentialité)
+find $BACKUP_DIR -type f -mtime +30 -delete
 echo "✅ Sauvegarde : $BACKUP_DIR/db_$DATE.sql"

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth/sqlite-auth";
-import { addPoints } from "@/lib/gamification/pointsService";
+import { addPoints, awardBadge } from "@/lib/gamification/pointsService";
 import { sendEmail } from "@/lib/email/mailer";
 import { reservationEmail } from "@/lib/email/templates";
 import { CreateNotification } from "@/lib/notifications";
@@ -79,6 +79,7 @@ export async function POST(
 
     // Points réservation
     await addPoints(session.userId, 'item_reservation').catch(() => {})
+    await awardBadge(session.userId, 'first_reservation').catch(() => {})
 
     await ensureWeeklyChallenges(session.userId).catch(() => {})
     await progressChallenge(session.userId, 'reserve_3').catch(() => {})
@@ -102,6 +103,7 @@ export async function POST(
         )
         sendEmail({
             to: fullItem.list.user.email,
+            notification: true,
             subject: tpl.subject,
             html: tpl.html,
         }).catch(err => console.error('Reservation email error:', err))

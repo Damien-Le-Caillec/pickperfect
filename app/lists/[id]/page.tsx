@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { safeHref } from '@/lib/utils/safeUrl'
 import { useParams, useRouter }              from 'next/navigation'
 import Link                                  from 'next/link'
 import PageLayout                            from '@/components/layout/PageLayout'
 import styles                                from './page.module.css'
 import CustomSelect from '@/components/ui/CustomSelect'
+import { daysUntil } from '@/lib/utils/dates'
 
 // ============================================================
 // TYPES
@@ -25,6 +27,8 @@ interface Item {
   createdById?:   string
   createdBy_item?:{ id: string; name: string | null } | null
   priority:       number
+  receivedAt?:    string | null
+  receivedNote?:  string | null
 }
 
 interface Member {
@@ -365,6 +369,7 @@ export default function ListDetailPage() {
           ? new Date(editListForm.eventDate).toISOString()
           : undefined,
         budget: editListForm.budget ? parseFloat(editListForm.budget) : undefined,
+        surpriseMode: editListForm.surpriseMode,
       }),
     })
 
@@ -502,9 +507,7 @@ export default function ListDetailPage() {
                   )
                 })()}
                 {list.eventDate && (() => {
-                  const daysLeft = Math.ceil(
-                    (new Date(list.eventDate!).getTime() - Date.now()) / 86400000
-                  )
+                  const daysLeft = daysUntil(list.eventDate!)
                   return (
                     <span style={{ color: daysLeft <= 7 ? 'var(--error)' : daysLeft <= 30 ? 'var(--peach-dark)' : undefined, fontWeight: daysLeft <= 30 ? 700 : 400 }}>
                       <i className="fas fa-calendar-alt" />
@@ -1003,8 +1006,8 @@ export default function ListDetailPage() {
                           </button>
                         )}
 
-                        {(item.affiliateLink || item.url) && (
-                          <a href={item.affiliateLink || item.url} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-icon btn-sm" title="Voir le produit">
+                        {safeHref(item.affiliateLink || item.url) && (
+                          <a href={safeHref(item.affiliateLink || item.url)} target="_blank" rel={item.affiliateLink ? 'sponsored noopener noreferrer' : 'noopener noreferrer'} className="btn btn-ghost btn-icon btn-sm" title="Voir le produit">
                             <i className="fas fa-external-link-alt" />
                           </a>
                         )}
@@ -1022,7 +1025,7 @@ export default function ListDetailPage() {
                         )}
 
                         {/* Bouton "Reçu !" - visible pour le proprio si l'item est réservé et pas encore confirmé */}
-                        {isOwner && item.reserved && !(item as any).receivedAt && (
+                        {isOwner && item.reserved && !item.receivedAt && (
                           <button
                             className='btn btn-ghost btn-sm'
                             style={{ fontSize: '0.78rem', color: 'var(--mint)' }}
@@ -1038,7 +1041,7 @@ export default function ListDetailPage() {
                             <i className='fas fa-box-open' /> Reçu !
                           </button>
                         )}
-                        {isOwner && (item as any).receivedAt && (
+                        {isOwner && item.receivedAt && (
                           <span className='badge badge-mint' style={{ fontSize: '0.72rem' }}>
                             <i className='fas fa-heart' /> Reçu
                           </span>

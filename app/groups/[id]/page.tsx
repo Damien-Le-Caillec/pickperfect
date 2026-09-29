@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { safeHref } from '@/lib/utils/safeUrl'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import PageLayout from '@/components/layout/PageLayout'
+import { daysUntil } from '@/lib/utils/dates'
 
 interface GroupData {
   id: string
@@ -12,6 +14,23 @@ interface GroupData {
   ownerId: string
   members: { userId: string; role: string; user: { id: string; name: string | null; email: string } }[]
   lists: { list: { id: string; title: string; _count: { items: number }; items: { reserved: boolean }[] } }[]
+}
+
+interface Wish {
+  id:           string
+  title:        string
+  description?: string | null
+  price?:       number | null
+  url?:         string | null
+}
+
+interface SantaState {
+  budget?:    number | null
+  eventDate?: string | null
+  isOwner?:   boolean
+  receiver?:  { id: string; name: string | null } | null
+  stats?:     { total: number; filledWishes: number } | null
+  [key: string]: unknown
 }
 
 export default function GroupDetailPage() {
@@ -26,11 +45,11 @@ export default function GroupDetailPage() {
   const [copied,    setCopied]    = useState(false)
 
   // ---- Secret Santa ----
-  const [santa,        setSanta]        = useState<any>(null)
+  const [santa,        setSanta]        = useState<SantaState | null>(null)
   const [santaLoading, setSantaLoading] = useState(false)
   const [santaForm,    setSantaForm]    = useState({ budget: '', eventDate: '' })
-  const [myWishes,     setMyWishes]     = useState<any[]>([])
-  const [targetWishes, setTargetWishes] = useState<any[]>([])
+  const [myWishes,     setMyWishes]     = useState<Wish[]>([])
+  const [targetWishes, setTargetWishes] = useState<Wish[]>([])
   const [wishForm,     setWishForm]     = useState({ title: '', description: '', price: '', url: '' })
   const [showWishes,   setShowWishes]   = useState(false)
   const [addingWish,   setAddingWish]   = useState(false)
@@ -296,7 +315,7 @@ export default function GroupDetailPage() {
                   {santa.eventDate && (
                     <div className="card" style={{ flex: 1, textAlign: 'center', padding: 'var(--s-4)' }}>
                       <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--lavender)' }}>
-                        {Math.max(0, Math.ceil((new Date(santa.eventDate).getTime() - Date.now()) / 86400000))}j
+                        {Math.max(0, daysUntil(santa.eventDate))}j
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>avant l'événement</div>
                     </div>
@@ -343,13 +362,13 @@ export default function GroupDetailPage() {
                     </p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
-                      {targetWishes.map((w: any) => (
+                      {targetWishes.map(w => (
                         <div key={w.id} style={{ background: 'var(--surface-2)', borderRadius: 'var(--r-lg)', padding: 'var(--s-4)' }}>
                           <div style={{ fontWeight: 700, marginBottom: 4 }}>{w.title}</div>
                           {w.description && <div style={{ fontSize: '0.8rem', color: 'var(--text-3)', marginBottom: 4 }}>{w.description}</div>}
                           <div style={{ display: 'flex', gap: 'var(--s-3)', alignItems: 'center' }}>
                             {w.price && <span className="badge badge-mint">{w.price}€</span>}
-                            {w.url && <a href={w.url} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm"><i className="fas fa-external-link-alt" /> Voir</a>}
+                            {safeHref(w.url) && <a href={safeHref(w.url)} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm"><i className="fas fa-external-link-alt" /> Voir</a>}
                           </div>
                         </div>
                       ))}
@@ -367,13 +386,13 @@ export default function GroupDetailPage() {
 
                 {myWishes.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)', marginBottom: 'var(--s-4)' }}>
-                    {myWishes.map((w: any) => (
+                    {myWishes.map(w => (
                       <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', background: 'var(--surface-2)', borderRadius: 'var(--r-lg)', padding: 'var(--s-3) var(--s-4)' }}>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{w.title}</div>
                           {w.price && <span style={{ fontSize: '0.75rem', color: 'var(--mint)' }}>{w.price}€</span>}
                         </div>
-                        {w.url && <a href={w.url} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-icon btn-sm"><i className="fas fa-external-link-alt" /></a>}
+                        {safeHref(w.url) && <a href={safeHref(w.url)} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-icon btn-sm"><i className="fas fa-external-link-alt" /></a>}
                         <button className="btn btn-danger btn-icon btn-sm" onClick={() => deleteWish(w.id)}><i className="fas fa-trash" /></button>
                       </div>
                     ))}

@@ -15,25 +15,49 @@ services:
       retries:  5
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL:        postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      SESSION_SECRET:      ${SESSION_SECRET}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
-      SMTP_HOST:           ${SMTP_HOST}
-      SMTP_PORT:           ${SMTP_PORT}
-      SMTP_USER:           ${SMTP_USER}
-      SMTP_PASS:           ${SMTP_PASS}
-      SMTP_FROM:           ${SMTP_FROM}
-      CRON_SECRET:         ${CRON_SECRET}
+      DATABASE_URL:         postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      SESSION_SECRET:       ${SESSION_SECRET}
+      NEXT_PUBLIC_APP_URL:  ${NEXT_PUBLIC_APP_URL}
+      SMTP_HOST:            ${SMTP_HOST}
+      SMTP_PORT:            ${SMTP_PORT}
+      SMTP_USER:            ${SMTP_USER}
+      SMTP_PASS:            ${SMTP_PASS}
+      SMTP_FROM:            ${SMTP_FROM}
+      CRON_SECRET:          ${CRON_SECRET}
+      AMAZON_AFFILIATE_TAG: ${AMAZON_AFFILIATE_TAG:-}
+      FNAC_AFFILIATE_ID:    ${FNAC_AFFILIATE_ID:-}
+      DARTY_PARTNER_ID:     ${DARTY_PARTNER_ID:-}
+      AMAZON_AFFILIATE_TEMPLATE:    ${AMAZON_AFFILIATE_TEMPLATE:-}
+      FNAC_AFFILIATE_TEMPLATE:      ${FNAC_AFFILIATE_TEMPLATE:-}
+      DARTY_AFFILIATE_TEMPLATE:     ${DARTY_AFFILIATE_TEMPLATE:-}
+      CDISCOUNT_AFFILIATE_TEMPLATE: ${CDISCOUNT_AFFILIATE_TEMPLATE:-}
+      ETSY_AFFILIATE_TEMPLATE:      ${ETSY_AFFILIATE_TEMPLATE:-}
+      MANOMANO_AFFILIATE_TEMPLATE:  ${MANOMANO_AFFILIATE_TEMPLATE:-}
     volumes:
       - uploads:/app/public/uploads
     ports:
       - "3000:3000"
+
+  # Appelle les routes /api/cron/* chaque jour (rappels anniversaires + Secret Santa)
+  cron:
+    image: alpine:3.20
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      CRON_SECRET: ${CRON_SECRET}
+    volumes:
+      - ./cron/entrypoint.sh:/entrypoint.sh:ro
+    entrypoint: ["sh", "/entrypoint.sh"]
 
 volumes:
   pgdata:

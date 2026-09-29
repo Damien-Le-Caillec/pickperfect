@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth/sqlite-auth";
+import { z } from 'zod'
+import { FREE_PRIVATE_LIST_LIMIT, hasReward } from '@/lib/points/rewards'
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -95,6 +97,15 @@ export async function GET(
   return NextResponse.json(list)
 }
 
+const UpdateSchema = z.object({
+    title:        z.string().trim().min(1, 'Titre requis').max(100).optional(),
+    description:  z.string().max(500).nullable().optional(),
+    privacy:      z.enum(['PUBLIC', 'UNLISTED', 'PRIVATE']).optional(),
+    budget:       z.number().positive().nullable().optional(),
+    surpriseMode: z.boolean().optional(),
+    eventDate:    z.string().nullable().optional(),
+})
+
 export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -113,7 +124,19 @@ export async function PATCH(
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 
-    const body    = await request.json()
+    const parsed = UpdateSchema.safeParse(await request.json())
+    if (!parsed.success) {
+        return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+    }
+    const body = parsed.data
+
+    if (body.privacy === 'PRIVATE' && list.privacy !== 'PRIVATE') {
+        const privateCount = await prisma.list.count({ where: { userId: session.userId, privacy: 'PRIVATE' } })
+        if (privateCount >= FREE_PRIVATE_LIST_LIMIT && !(await hasReward(session.userId, 'r4'))) {
+            return NextResponse.json({ error: `Limite de ${FREE_PRIVATE_LIST_LIMIT} listes privées atteinte. Débloquez « Listes illimitées » dans la page Points.` }, { status: 403 })
+        }
+    }
+
     const updated = await prisma.list.update({
         where: { id },
         data:  {
@@ -121,7 +144,7 @@ export async function PATCH(
             description:  body.description,
             privacy:      body.privacy,
             budget:       body.budget,
-            surpriseMode: body.surpriseMode ?? undefined,
+            surpriseMode: body.surpriseMode,
             eventDate:    body.eventDate ? new Date(body.eventDate) : undefined,
         },
     })

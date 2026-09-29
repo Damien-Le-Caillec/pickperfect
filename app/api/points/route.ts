@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth/sqlite-auth";
+import { getUnlockedRewards } from "@/lib/points/rewards";
 
 async function getSession() {
     const cookieStore = await cookies()
@@ -18,7 +19,7 @@ export async function GET() {
 
     const userId = session.userId
 
-    const [points, badges, transactions] = await Promise.all([
+    const [points, badges, transactions, unlockedRewards] = await Promise.all([
         prisma.points.findUnique({
             where:  { userId },
             select: {
@@ -41,7 +42,8 @@ export async function GET() {
             orderBy: { createdAt: 'desc' },
             take: 50,
         }),
+        getUnlockedRewards(userId),
     ])
 
-    return NextResponse.json({ points, badges, transactions })
+    return NextResponse.json({ points, badges, transactions, unlockedRewards })
 }

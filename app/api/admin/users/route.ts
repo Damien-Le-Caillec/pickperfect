@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/admin";
-import { Session } from "inspector/promises";
-import { email } from "zod";
 
 export async function GET(request: NextRequest) {
     const session = await requireAdmin()
@@ -13,8 +11,8 @@ export async function GET(request: NextRequest) {
     const users = await prisma.user.findMany({
         where: search ? {
             OR: [
-                { email: { contains: search } },
-                { name: { contains: search } },
+                { email: { contains: search, mode: 'insensitive' } },
+                { name: { contains: search, mode: 'insensitive' } },
             ],
         } : undefined,
         select: {

@@ -230,6 +230,7 @@ export async function PATCH(
 
     await sendEmail({
       to:      giver.email,
+      notification: true,
       subject: `🎅 Rappel Secret Santa — ${group.name}`,
       html: `
         <div style="font-family:sans-serif;max-width:520px;margin:40px auto;background:white;border-radius:16px;padding:40px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">

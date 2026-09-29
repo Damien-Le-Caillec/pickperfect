@@ -47,3 +47,21 @@ export function checkRateLimit(
         resetAt: entry.resetAt,
     }
 }
+
+// IP du client (premier élément de x-forwarded-for si derrière un reverse proxy)
+export function getClientIp(headers: Headers): string {
+    const forwarded = headers.get('x-forwarded-for')
+    if (forwarded) return forwarded.split(',')[0].trim()
+    return headers.get('x-real-ip') ?? 'unknown'
+}
+
+// Réponse 429 standard, ou null si la requête est autorisée
+export function rateLimitResponse(identifier: string, options: RateLimitOptions): Response | null {
+    const limit = checkRateLimit(identifier, options)
+    if (limit.allowed) return null
+    const retryAfter = Math.ceil((limit.resetAt - Date.now()) / 1000)
+    return Response.json(
+        { error: `Trop de requêtes. Réessayez dans ${Math.ceil(retryAfter / 60)} minute(s)` },
+        { status: 429, headers: { 'Retry-After': retryAfter.toString() } }
+    )
+}

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Inter } from 'next/font/google'
+import '@fortawesome/fontawesome-free/css/all.min.css'
 import './globals.css'
 import FeedbackButton from "@/components/layout/FeedbackButton";
 
@@ -9,7 +11,15 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   ),
+  openGraph: {
+    type:     'website',
+    locale:   'fr_FR',
+    siteName: 'PickPerfect',
+  },
 }
+
+// Police auto-hébergée par Next (aucune requête vers Google côté visiteur)
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
 
 export default function RootLayout({
   children,
@@ -17,23 +27,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr" data-theme="light" suppressHydrationWarning>
+    <html lang="fr" data-theme="light" className={inter.variable} suppressHydrationWarning>
       <head>
-        <link 
-          rel="stylesheet" 
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-          crossOrigin="anonymous"
-        />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin=""
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
         <script dangerouslySetInnerHTML={{
           __html: `
             (function() {
@@ -45,8 +40,10 @@ export default function RootLayout({
           `
         }} />
       </head>
-      <body>{children}</body>
-      <FeedbackButton />
+      <body>
+        {children}
+        <FeedbackButton />
+      </body>
     </html>
   )
 }

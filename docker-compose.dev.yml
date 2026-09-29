@@ -1,0 +1,18 @@
+# Postgres pour le développement local
+# Lancer : docker compose -f docker-compose.dev.yml up -d
+# DATABASE_URL="postgresql://pickperfect:pickperfect@localhost:5433/pickperfect"
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     pickperfect
+      POSTGRES_PASSWORD: pickperfect
+      POSTGRES_DB:       pickperfect
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+
+volumes:
+  pgdata_dev:

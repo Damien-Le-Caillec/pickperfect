@@ -1,8 +1,12 @@
 node_modules
 .next
 .git
-.env.local
-.env.production
+.env*
+!.env.production.example
+prisma/dev.db*
 public/uploads
+markdown
+*.tsbuildinfo
+npm-debug.log*
 *.md
 .vscode

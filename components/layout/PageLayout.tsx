@@ -1,4 +1,5 @@
 import Header from './Header'
+import EmailVerifyBanner from './EmailVerifyBanner'
 import styles from './PageLayout.module.css'
 
 interface Props {
@@ -9,7 +10,10 @@ export default function PageLayout({ children }: Props) {
     return (
         <div className={styles.layout}>
             <Header />
-            <main className={styles.main}>{children}</main>
+            <main className={styles.main}>
+                <EmailVerifyBanner />
+                {children}
+            </main>
         </div>
     )
 }
