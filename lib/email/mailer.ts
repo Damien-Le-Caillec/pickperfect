@@ -62,6 +62,9 @@ export async function sendEmail({ to, subject, html, text, notification }: SendE
 
     await transporteur.sendMail({
         from: process.env.SMTP_FROM,
+        // Les réponses reviennent toujours à l'adresse PickPerfect, même si le
+        // service d'envoi réécrit l'expéditeur (ex. Brevo avec une adresse Gmail)
+        replyTo: process.env.SMTP_REPLY_TO || process.env.SMTP_FROM,
         to,
         subject,
         html,
