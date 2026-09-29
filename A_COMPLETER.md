@@ -33,6 +33,22 @@ Le projet est passé de SQLite à PostgreSQL.
 
 ---
 
+## 1 bis. Bêta sur Vercel — https://pickperfect-taupe.vercel.app
+
+- [x] Projet Vercel relié à GitHub : chaque `git push` sur `master` redéploie le site.
+- [x] Base Neon et migrations automatiques à chaque déploiement
+- [ ] **Te passer admin en ligne** : Vercel → onglet *Storage* → ta base Neon → *Open in Neon* → *SQL Editor* :
+      `UPDATE users SET role = 'ADMIN' WHERE email = 'ton@email.fr';`
+- [ ] **Emails pour les testeurs** : ajouter `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` et `SMTP_FROM`
+      dans *Settings → Environment Variables*, puis *Redeploy* (voir 3.3 pour Brevo).
+- [ ] **Ne pas renseigner les variables d'affiliation** tant que le projet est sur l'offre Hobby gratuite :
+      Vercel classe un site d'affiliation comme usage commercial, réservé à l'offre Pro.
+- Les limites anti-abus sont gardées en mémoire par instance : sur Vercel, elles sont moins strictes qu'en Docker.
+  Suffisant pour une bêta.
+- Tâches quotidiennes : un seul cron Vercel (`vercel.json`), vers 7h UTC à une heure près.
+
+---
+
 ## 2. Mentions légales (obligatoire en France — loi LCEN)
 
 📄 Fichier : `app/legal/mentions-legales/page.tsx` — remplacer chaque `[À compléter]`.
